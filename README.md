@@ -1,89 +1,104 @@
+<div align="center">
+
 # Quant Finance & Machine Learning Portfolio
 
-Welcome to my Quantitative Finance and Machine Learning portfolio. This repository showcases a comprehensive collection of projects and rigorous mathematical courses that I have developed to master the complexities of algorithmic trading, option pricing, and financial modeling.
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
+![LaTeX](https://img.shields.io/badge/latex-%23008080.svg?style=for-the-badge&logo=latex&logoColor=white)
+![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
 
-## Projects
+<br>
 
-This section contains coding implementations ranging from fundamental stochastic processes to advanced machine learning models applied to finance.
+**A comprehensive collection of rigor and innovation.**
+<br>
+*Connecting the dots between Stochastic Calculus, Algorithmic Trading, and Deep Learning.*
 
-### 01. Brownian Motion & GBM
-*   **01_brownian_gbm**: Simulations of geometric Brownian motion, the foundation of modern financial modeling.
+[Explore Projects](#-projects) • [Read Courses](#-mathematics-courses-pdf)
 
-### 02. Black-Scholes Monte Carlo
-*   **02_black_sholes_mc**: Pricing options using Monte Carlo simulations validating the Black-Scholes analytical formula.
-
-### 03. Binomial Trees & Hedging
-*   **03_binomial_discrete_hedging**: Implementation of Cox-Ross-Rubinstein binomial trees and discrete dynamic hedging strategies.
-
-### 04. VaR & CVaR
-*   **04_var_cvar_monte_carlo**: Risk management tools calculating Value at Risk (VaR) and Conditional Value at Risk (CVaR) using Monte Carlo methods.
-
-### 05. Strategy Backtesting
-*   **05_backtest_strategy**: a framework for backtesting trading strategies against historical data.
-
-### 06. Volatility Modeling
-*   **06_volatility_garch_heston_pricing**: Advanced volatility modeling using GARCH processes and Heston stochastic volatility pricing.
-
-### 07. Rates & Swaps
-*   **07_yield_curve_swaps**: Construction of yield curves and pricing of interest rate swaps.
-
-### 08. American Options
-*   **08_american_option_lsm**: Pricing American options using the Longstaff-Schwartz Least Squares Monte Carlo (LSM) method.
-
-### 09. Statistical Arbitrage
-*   **09_pairs_trading_kalman_cointegration**: Pairs trading strategies utilizing Cointegration tests and Kalman Filters for dynamic hedge ratios.
-
-### 10. Volatility Surface
-*   **10_vol_surface_svi**: Calibration of the volatility surface using the Stochastic Volatility Inspired (SVI) parameterization.
-
-### 11. Structured Products
-*   **11_Phoenix_Autocall**: Detailed pricing and risk analysis of Phoenix Autocallable notes.
-
-### 12. Reinforcement Learning
-*   **12_reinforcement_learning_trading**: Application of Deep Q-Learning (DQN) and other RL agents for autonomous trading decision making.
-
-### 13. XGBoost
-*   **13_xgboost_price_prediction**: Using Gradient Boosting (XGBoost) for financial time-series prediction and feature importance analysis.
-
-### Capstone
-*   **Capstone 01-10**: A consolidated project demonstrating comprehensive mastery of the first 10 modules.
+</div>
 
 ---
 
-## Mathematics Courses (PDF)
+## 🚀 Projects
 
-A series of rigorous, self-authored LaTeX courses covering the theoretical underpinnings of quantitative finance.
+*From simulation to deployment: Implementing financial theory with production-grade code.*
 
-1.  **Brownian Motion & Ito's Lemma**: The stochastic calculus foundations.
-2.  **The Change of Measure (Girsanov Theorem)**: Risk-neutral pricing measures.
-3.  **The Black-Scholes PDE**: Derivation via the Delta-hedging argument.
-4.  **Calculating the Black-Scholes Formula**: Solving the probabilistic integrals.
-5.  **Put-Call Parity**: Exploring no-arbitrage relations.
-6.  **The Greeks**: Sensitivity analysis (Delta, Gamma, Vega, Theta, Rho).
-7.  **Implied Volatility**: Volatility smiles and market expectations.
-8.  **Monte Carlo Simulations**: Numerical techniques for pricing.
-9.  **Stochastic Volatility**: Heston model and dynamic volatility.
-10. **Jump-Diffusion Models**: Merton model and discontinuous price paths.
-11. **Barrier Options & Asians**: Path-dependent exotic options.
-12. **Value at Risk (VaR) & Expected Shortfall**: Market risk metrics.
-13. **Stochastic Interest Rates**: Vasicek and partial equilibrium models.
-14. **The Hull-White Model**: Extension to fit the initial term structure.
-15. **Implied Volatility Surface**: Dynamics and calibration.
-16. **Trading Strategies**: Quantitative approaches to alpha generation.
-17. **The Greeks Masterclass**: Advanced hedging and risk management.
-18. **Structured Products Atlas**: The mechanics of complex derivatives.
-19. **Introduction to Lévy Processes**: Jump processes beyond the normal distribution.
-20. **Reinforcement Learning for Finance**: MDPs, Bellman equations, and Q-learning.
-21. **XGBoost Mathematics**: Mathematical theory behind Gradient Boosting Machines.
-22. **Mathematics of Credit Risk**: Structural and reduced-form models.
-23. **Numerical Methods for PDEs**: Finite difference methods for option pricing.
-24. **Fourier Transform Pricing**: Carr-Madan formulas and fast evaluation.
-25. **Advanced Rates HJM Framework**: Heath-Jarrow-Morton framework for forward rates.
+| Project | Description | Tech Stack |
+| :--- | :--- | :--- |
+| **01. Brownian Motion & GBM** | Simulations of geometric Brownian motion, the bedrock of financial modeling. | `NumPy` `Matplotlib` |
+| **02. Black-Scholes Monte Carlo** | Pricing options via Monte Carlo simulations, validating analytical formulas. | `Python` `SciPy` |
+| **03. Binomial Trees & Hedging** | Cox-Ross-Rubinstein trees and discrete dynamic hedging strategies. | `Pandas` `Algo` |
+| **04. VaR & CVaR** | Risk management framework calculating VaR and Expected Shortfall using Monte Carlo. | `Scipy` `Stats` |
+| **05. Strategy Backtesting** | Robust framework for backtesting trading strategies against historical data. | `Pandas` `Backtest` |
+| **06. Volatility Modeling** | Advanced volatility modeling with GARCH patterns and Heston stochastic pricing. | `ARCH` `Heston` |
+| **07. Rates & Swaps** | Yield curve construction and interest rate swap pricing. | `QuantLib` `Rates` |
+| **08. American Options** | Pricing American options via Longstaff-Schwartz (LSM) method. | `LSM` `Monte Carlo` |
+| **09. Statistical Arbitrage** | Pairs trading with Cointegration tests and Kalman Filters for dynamic hedging. | `Kalman` `Statsmodels` |
+| **10. Volatility Surface** | Calibration of the volatility surface using SVI parameterization. | `Optimize` `SVI` |
+| **11. Structured Products** | Detailed pricing and risk analysis of Phoenix Autocallable notes. | `Exotics` `Pricing` |
+| **12. Reinforcement Learning** | Deep Q-Learning (DQN) agents for autonomous trading decisions. | `PyTorch` `RL` |
+| **13. XGBoost Prediction** | Gradient Boosting for financial time-series prediction and feature importance. | `XGBoost` `ML` |
+| **Capstone Project** | A consolidated masterpiece demonstrating mastery of the first 10 modules. | `Full Stack` |
 
 ---
 
-## Technologies
+## 📚 Mathematics Courses (PDF)
 
-*   **Languages**: Python, C++, SQL, LaTeX
-*   **Libraries**: NumPy, Pandas, Scikit-Learn, TensorFlow/PyTorch, XGBoost
-*   **Tools**: Git, Streamlit, Jupyter Notebooks
+*A self-authored library of rigorous LaTeX courses covering the theoretical underpinnings.*
+
+<details>
+<summary><strong>Click to expand the full course list</strong></summary>
+<br>
+
+| # | Course Title | Topic |
+| :---: | :--- | :--- |
+| 01 | **Brownian Motion & Ito's Lemma** | Stochastic Calculus Foundations |
+| 02 | **The Change of Measure** | Girsanov Theorem & Risk-Neutral Measures |
+| 03 | **The Black-Scholes PDE** | Delta-Hedging Derivation |
+| 04 | **Calculating Black-Scholes** | Solving Probabilistic Integrals |
+| 05 | **Put-Call Parity** | No-Arbitrage Relations |
+| 06 | **The Greeks** | Sensitivity Analysis (Delta, Gamma, Vega...) |
+| 07 | **Implied Volatility** | Smiles & Market Expectations |
+| 08 | **Monte Carlo Simulations** | Numerical Pricing Techniques |
+| 09 | **Stochastic Volatility** | Heston Model & Dynamics |
+| 10 | **Jump-Diffusion Models** | Merton Model & Discontinuous Paths |
+| 11 | **Barrier Options & Asians** | Path-Dependent Exotics |
+| 12 | **VaR & Expected Shortfall** | Market Risk Metrics |
+| 13 | **Stochastic Interest Rates** | Vasicek & Partial Equilibrium |
+| 14 | **The Hull-White Model** | Term Structure Fitting |
+| 15 | **Implied Volatility Surface** | Dynamics & Calibration |
+| 16 | **Trading Strategies** | Alpha Generation |
+| 17 | **The Greeks Masterclass** | Advanced Hedging |
+| 18 | **Structured Products Atlas** | Complex Derivatives |
+| 19 | **Introduction to Lévy Processes** | Advanced Jump Processes |
+| 20 | **RL for Finance** | MDPs & Q-Learning |
+| 21 | **XGBoost Mathematics** | Theory of Gradient Boosting |
+| 22 | **Mathematics of Credit Risk** | Structural & Reduced-Form Models |
+| 23 | **Numerical Methods for PDEs** | Finite Difference Methods |
+| 24 | **Fourier Transform Pricing** | Carr-Madan formulas |
+| 25 | **Advanced Rates HJM** | Heath-Jarrow-Morton Framework |
+
+</details>
+
+---
+
+## 🛠 Technologies
+
+The portfolio is built on a robust stack of modern quantitative tools:
+
+*   **Languages**: `Python` `C++` `SQL` `LaTeX`
+*   **Machine Learning**: `TensorFlow` `PyTorch` `Scikit-Learn` `XGBoost`
+*   **Data & Analytics**: `NumPy` `Pandas` `SciPy` `Statsmodels`
+*   **Visualization**: `Matplotlib` `Seaborn` `Streamlit`
+
+---
+
+<div align="center">
+
+**© 2026 Quant Finance Portfolio** • *Crafted with ❤️ and Code*
+
+</div>
