@@ -1,0 +1,98 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{booktabs} % For nicer tables
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- Title ---
+\title{Step 5: Put-Call Parity\\(No-Arbitrage Relation)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Put-Call Parity is a fundamental principle that defines the relationship between the price of European Call ($C$) and Put ($P$) options with the same strike ($K$) and maturity ($T$).
+It is derived using a static replication argument, independent of any model (it works for Black-Scholes, but also for any other model, as long as there is no arbitrage).
+
+\section{Portfolio Construction}
+
+We construct two portfolios, A and B, today (at time $t=0$).
+
+\subsection*{Portfolio A: Fiduciary Call}
+\begin{itemize}
+    \item Long one Call option ($C$).
+    \item Long a zero-coupon bond paying $K$ at maturity (Value today: $K e^{-rT}$).
+\end{itemize}
+\begin{equation}
+    \Pi_A = C + K e^{-rT}
+\end{equation}
+
+\subsection*{Portfolio B: Protective Put}
+\begin{itemize}
+    \item Long one Put option ($P$).
+    \item Long one share of the underlying stock ($S$).
+\end{itemize}
+\begin{equation}
+    \Pi_B = P + S
+\end{equation}
+
+\section{Payoff Analysis at Maturity ($T$)}
+
+We analyze the value of both portfolios at time $T$, depending on the final stock price $S_T$.
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{State of Market} & \textbf{$S_T \le K$} & \textbf{$S_T > K$} \\
+        \midrule
+        \textbf{Portfolio A} & & \\
+        \quad Call Option $\max(S_T-K, 0)$ & $0$ & $S_T - K$ \\
+        \quad Cash (Bond) & $K$ & $K$ \\
+        \textbf{Total Payoff A} & $\mathbf{K}$ & $\mathbf{S_T}$ \\
+        \midrule
+        \textbf{Portfolio B} & & \\
+        \quad Put Option $\max(K-S_T, 0)$ & $K - S_T$ & $0$ \\
+        \quad Stock & $S_T$ & $S_T$ \\
+        \textbf{Total Payoff B} & $\mathbf{K}$ & $\mathbf{S_T}$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Payoff Matrix}
+\end{table}
+
+\section{Conclusion}
+
+As demonstrated in the table, both portfolios deliver exactly the same payoff in all possible states of the world:
+$$ \Pi_A(T) = \max(S_T, K) = \Pi_B(T) $$
+
+By the \textbf{Law of One Price} (No-Arbitrage Principle), if two assets have identical future cash flows, they must have the same price today.
+
+Therefore:
+\begin{equation}
+    \Pi_A(0) = \Pi_B(0)
+\end{equation}
+
+This yields the fundamental Put-Call Parity equation:
+
+\begin{equation}
+    \boxed{C + K e^{-rT} = P + S}
+\end{equation}
+
+\textbf{Application:}
+If we know the price of the Call (from Black-Scholes), we can immediately find the price of the Put without evaluating a new integral:
+$$ P = C - S + K e^{-rT} $$
+
+\end{document}

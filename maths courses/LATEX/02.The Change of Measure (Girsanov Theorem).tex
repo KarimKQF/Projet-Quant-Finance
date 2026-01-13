@@ -1,0 +1,88 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip} % Better paragraph spacing
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- Title ---
+\title{Step 2: The Change of Measure\\(Girsanov's Theorem)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{The Problem: Real World Dynamics ($\mathbb{P}$)}
+
+In the real world (historical probability measure $\mathbb{P}$), the asset price dynamics depend on the investors' risk aversion. The Stochastic Differential Equation (SDE) is:
+\begin{equation}
+    dS_t = \mu S_t dt + \sigma S_t dW_t^{\mathbb{P}}
+\end{equation}
+The parameter $\mu$ (real drift) is unknown, subjective, and difficult to estimate.
+To price a derivative objectively, we need a framework that does not depend on $\mu$. We must move to the \textbf{Risk-Neutral World ($\mathbb{Q}$)}.
+
+\section{The Market Price of Risk}
+
+First, we define the "Market Price of Risk" $\lambda$. It represents the excess return earned per unit of volatility:
+\begin{equation}
+    \lambda = \frac{\mu - r}{\sigma}
+\end{equation}
+Rearranging this term gives us a useful expression for $\mu$:
+\begin{equation} \label{eq:mu}
+    \mu = r + \sigma\lambda
+\end{equation}
+
+\section{Girsanov's Theorem}
+
+Girsanov's Theorem allows us to change the probability measure from $\mathbb{P}$ to $\mathbb{Q}$. It states that we can define a new Brownian motion $W_t^{\mathbb{Q}}$ under the risk-neutral measure such that:
+\begin{equation}
+    dW_t^{\mathbb{Q}} = dW_t^{\mathbb{P}} + \lambda dt
+\end{equation}
+Intuitively, we are shifting the mean of the noise.
+We can express the "real" Brownian motion in terms of the "risk-neutral" one:
+\begin{equation} \label{eq:brownian}
+    dW_t^{\mathbb{P}} = dW_t^{\mathbb{Q}} - \lambda dt
+\end{equation}
+
+\section{Derivation of Risk-Neutral Dynamics}
+
+We now substitute equation (\ref{eq:brownian}) into the original asset dynamics equation:
+
+\begin{align*}
+    dS_t &= \mu S_t dt + \sigma S_t dW_t^{\mathbb{P}} \\
+    dS_t &= \mu S_t dt + \sigma S_t \left( dW_t^{\mathbb{Q}} - \lambda dt \right)
+\end{align*}
+
+We expand the terms:
+\begin{align*}
+    dS_t &= \mu S_t dt + \sigma S_t dW_t^{\mathbb{Q}} - \sigma \lambda S_t dt \\
+    dS_t &= (\mu - \sigma \lambda) S_t dt + \sigma S_t dW_t^{\mathbb{Q}}
+\end{align*}
+
+Using equation (\ref{eq:mu}) ($\mu = r + \sigma\lambda$), we can substitute $\mu - \sigma \lambda$ with $r$:
+$$ \mu - \sigma \lambda = r $$
+
+\section{Conclusion}
+
+The dynamics of the asset under the Risk-Neutral measure $\mathbb{Q}$ become:
+
+\begin{equation}
+    \boxed{dS_t = r S_t dt + \sigma S_t dW_t^{\mathbb{Q}}}
+\end{equation}
+
+\textbf{Key Interpretation:}
+\begin{itemize}
+    \item The unknown parameter $\mu$ has disappeared.
+    \item It has been replaced by the risk-free rate $r$, which is observable.
+    \item In the world $\mathbb{Q}$, on average, the asset grows at the rate of a bank account. This justifies the use of $r$ in the Black-Scholes pricing formula.
+\end{itemize}
+
+\end{document}

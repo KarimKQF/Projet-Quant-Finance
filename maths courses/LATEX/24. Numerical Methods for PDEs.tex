@@ -1,0 +1,92 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\pagestyle{fancy}
+\fancyhead[L]{Numerical Methods for PDEs}
+\fancyhead[R]{Quant Finance Portfolio}
+
+\title{\textbf{Step 24: Numerical Methods for PDEs}\\ \large Finite Differences, Crank-Nicolson, and Stability Analysis}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{The Need for Numerical Methods}
+While Black-Scholes gives a closed-form solution for European options, most exotic derivatives (American options, Barrier options, Bermudans) obey the same PDE but lack analytical solutions due to complex boundaries.
+
+\textbf{The Black-Scholes PDE:}
+$$ \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS \frac{\partial V}{\partial S} - rV = 0 $$
+To solve this numerically, we transform it into a system of algebraic equations.
+
+\section{Discretization}
+We truncate the domain: $S \in [0, S_{\max}]$ and $t \in [0, T]$.
+\begin{itemize}
+    \item Time steps: $\Delta t = T/N$. Points $t_n = n \Delta t$.
+    \item Spot steps: $\Delta S = S_{\max}/M$. Points $S_j = j \Delta S$.
+\end{itemize}
+We denote $V_j^n \approx V(t_n, S_j)$.
+
+\section{Finite Difference Operators}
+Using Taylor expansions, we approximate derivatives:
+\begin{itemize}
+    \item $\frac{\partial V}{\partial t} \approx \frac{V_j^{n+1} - V_j^n}{\Delta t}$ (Forward Difference)
+    \item $\frac{\partial V}{\partial S} \approx \frac{V_{j+1}^n - V_{j-1}^n}{2\Delta S}$ (Central Difference)
+    \item $\frac{\partial^2 V}{\partial S^2} \approx \frac{V_{j+1}^n - 2V_j^n + V_{j-1}^n}{(\Delta S)^2}$ (Central Second Difference)
+\end{itemize}
+
+\section{The Crank-Nicolson Scheme}
+The Crank-Nicolson method is the industry standard because it is **unconditionally stable** and has **second-order accuracy** in both time and space: $O(\Delta t^2, \Delta S^2)$.
+
+It takes the average of the Explicit (known) and Implicit (unknown) schemes at $n$ and $n+1$.
+$$ \frac{V_j^{n+1} - V_j^n}{\Delta t} = \frac{1}{2} \mathcal{L}(V^{n+1}) + \frac{1}{2} \mathcal{L}(V^n) $$
+After grouping terms, we get a linear system:
+\begin{equation}
+    -\alpha_j V_{j-1}^n + (1 - \beta_j) V_j^n - \gamma_j V_{j+1}^n = \alpha_j V_{j-1}^{n+1} + (1 + \beta_j) V_j^{n+1} + \gamma_j V_{j+1}^{n+1}
+\end{equation}
+In matrix form: 
+$$ \mathbf{A} \mathbf{V}^n = \mathbf{B} \mathbf{V}^{n+1} $$
+Where $\mathbf{A}$ and $\mathbf{B}$ are **Tridiagonal Matrices**.
+
+\section{Boundary Conditions}
+To solve the system, we need conditions at the edges of the grid ($S=0$ and $S=S_{\max}$).
+
+\subsection{Lower Boundary ($S=0$)}
+At $S=0$, the PDE simplifies (as $\sigma S$ and $rS$ terms vanish):
+$$ \frac{\partial V}{\partial t} - rV = 0 \implies V_0^n = V_0^{n+1} e^{-r \Delta t} $$
+
+\subsection{Upper Boundary ($S=S_{\max}$)}
+For a Call option, as $S \to \infty$, $V \sim S$. So $\frac{\partial^2 V}{\partial S^2} \approx 0$.
+We use the linearity condition:
+$$ V_M^n = 2V_{M-1}^n - V_{M-2}^n $$
+(Dirichlet conditions are also possible: $V_{M} = S_{\max} - Ke^{-r(T-t)}$).
+
+\section{Stability Analysis (Von Neumann)}
+Why not use the simpler Explicit method?
+Let error evolve as $\epsilon_j^n = \xi^n e^{ik j \Delta S}$.
+For the Explicit method, the amplification factor $\xi$ can benefit $|\xi| > 1$ (instability) if:
+$$ \Delta t > \frac{(\Delta S)^2}{\sigma^2 S^2} $$
+This puts a severe restriction on time steps.
+Crank-Nicolson, however, satisfies $|\xi| \leq 1$ for **any** $\Delta t$.
+
+\section{Dealing with American Options}
+For American options, we solve the linear system for a temporary candidate $\tilde{V}^n$, then apply the constraint:
+$$ V_j^n = \max(\tilde{V}_j^n, \text{Payoff}(S_j)) $$
+This is typically solved using the \textbf{PSOR} (Projected Successive Over-Relaxation) algorithm or typically by "operator splitting" (solve then max).
+
+\end{document}

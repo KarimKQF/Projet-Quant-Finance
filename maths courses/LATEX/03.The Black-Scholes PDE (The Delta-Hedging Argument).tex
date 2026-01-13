@@ -1,0 +1,99 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- Title ---
+\title{Step 3: The Black-Scholes PDE\\(The Delta-Hedging Argument)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction: The Hedging Argument}
+
+Instead of using probabilistic expectations, we can derive the option price by constructing a risk-free portfolio.
+This approach relies on the assumption of \textbf{No-Arbitrage}: If a portfolio has no risk, it must earn the risk-free rate $r$.
+
+\section{Constructing the Portfolio}
+
+Consider a portfolio $\Pi$ consisting of:
+\begin{itemize}
+    \item A long position in one option $V(S, t)$.
+    \item A short position in $\Delta$ units of the underlying asset $S$.
+\end{itemize}
+
+The value of the portfolio is:
+\begin{equation}
+    \Pi = V(S, t) - \Delta S
+\end{equation}
+
+The change in the value of the portfolio over a small time interval $dt$ is:
+\begin{equation} \label{eq:dpi}
+    d\Pi = dV - \Delta dS
+\end{equation}
+
+\section{Applying Ito's Lemma}
+
+Since $V$ is a function of $S$ and $t$, we apply Ito's Lemma to find $dV$:
+\begin{equation}
+    dV = \frac{\partial V}{\partial t}dt + \frac{\partial V}{\partial S}dS + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2}dt
+\end{equation}
+
+Substitute this into equation (\ref{eq:dpi}):
+$$ d\Pi = \left( \frac{\partial V}{\partial t}dt + \frac{\partial V}{\partial S}dS + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2}dt \right) - \Delta dS $$
+
+Rearranging terms to group $dt$ and $dS$:
+\begin{equation}
+    d\Pi = \left( \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt + \left( \frac{\partial V}{\partial S} - \Delta \right)dS
+\end{equation}
+
+\section{Eliminating Risk (Delta Hedging)}
+
+The term $dS$ contains the stochastic component ($dW_t$). To make the portfolio risk-free, we must eliminate this source of uncertainty. We choose $\Delta$ such that the coefficient of $dS$ is zero:
+
+\begin{equation}
+    \frac{\partial V}{\partial S} - \Delta = 0 \quad \implies \quad \Delta = \frac{\partial V}{\partial S}
+\end{equation}
+
+This is the mathematical definition of the \textbf{Delta} of the option. The portfolio dynamics are now deterministic (no randomness):
+\begin{equation} \label{eq:riskfree1}
+    d\Pi = \left( \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt
+\end{equation}
+
+\section{No-Arbitrage Condition}
+
+Since the portfolio $\Pi$ is risk-free, it must grow at the risk-free rate $r$ to prevent arbitrage opportunities:
+\begin{equation}
+    d\Pi = r \Pi dt
+\end{equation}
+
+Substituting $\Pi = V - \Delta S$:
+\begin{equation} \label{eq:riskfree2}
+    d\Pi = r \left( V - \frac{\partial V}{\partial S} S \right) dt
+\end{equation}
+
+\section{The Black-Scholes Equation}
+
+We equate (\ref{eq:riskfree1}) and (\ref{eq:riskfree2}):
+$$ \left( \frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} \right)dt = r \left( V - S \frac{\partial V}{\partial S} \right) dt $$
+
+Dividing by $dt$ and rearranging all terms to one side, we obtain the Black-Scholes Partial Differential Equation (PDE):
+
+\begin{equation}
+    \boxed{\frac{\partial V}{\partial t} + rS \frac{\partial V}{\partial S} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} - rV = 0}
+\end{equation}
+
+\textbf{Note:} This is a heat equation (diffusion equation). Solving this PDE with the boundary condition $\max(S_T - K, 0)$ yields the exact same Black-Scholes formula derived in Step 1 and 2.
+
+\end{document}

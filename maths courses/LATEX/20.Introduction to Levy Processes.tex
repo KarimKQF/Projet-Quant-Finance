@@ -1,0 +1,142 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Introduction to L\'evy Processes in Finance}
+\author{Quant Finance Portfolio}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document provides a mathematical introduction to L\'evy processes, a class of stochastic processes widely used in quantitative finance to model asset prices with jumps and heavy tails. We cover the definition, the L\'evy-Khintchine representation, and key examples like the Merton Jump-Diffusion model.
+\end{abstract}
+
+\section{Definition of a L\'evy Process}
+A stochastic process $X = (X_t)_{t \ge 0}$ defined on a probability space $(\Omega, \mathcal{F}, \mathbb{P})$ is called a L\'evy process if it satisfies the following properties:
+\begin{enumerate}
+    \item $X_0 = 0$ almost surely.
+    \item \textbf{Independent Increments}: For any $0 \le t_1 < t_2 < \dots < t_n$, the increments $X_{t_2}-X_{t_1}, \dots, X_{t_n}-X_{t_{n-1}}$ are independent.
+    \item \textbf{Stationary Increments}: The distribution of $X_{t+h} - X_t$ does not depend on $t$. Usefully, $X_{t+h} - X_t \stackrel{d}{=} X_h$.
+    \item \textbf{Stochastic Continuity}: For any $\epsilon > 0$ and $t \ge 0$, $\lim_{h \to 0} \mathbb{P}(|X_{t+h} - X_t| > \epsilon) = 0$.
+\end{enumerate}
+
+\section{The L\'evy-Khintchine Representation}
+The characteristic function of a L\'evy process $X_t$ is given by the L\'evy-Khintchine formula:
+\begin{equation}
+    \mathbb{E}[e^{iuX_t}] = e^{t \psi(u)}, \quad u \in \mathbb{R}
+\end{equation}
+where the characteristic exponent $\psi(u)$ is defined as:
+\begin{equation}
+    \psi(u) = i\gamma u - \frac{1}{2}\sigma^2 u^2 + \int_{\mathbb{R} \setminus \{0\}} (e^{iux} - 1 - iux \mathbf{1}_{|x| < 1}) \nu(dx)
+\end{equation}
+Here:
+\begin{itemize}
+    \item $\gamma \in \mathbb{R}$ is the drift parameter.
+    \item $\sigma^2 \ge 0$ is the diffusion coefficient (Gaussian part).
+    \item $\nu$ is the \textbf{L\'evy measure}, satisfying $\int_{\mathbb{R} \setminus \{0\}} \min(1, x^2) \nu(dx) < \infty$.
+\end{itemize}
+The triplet $(\gamma, \sigma^2, \nu)$ characterizes the L\'evy process.
+
+\section{Examples of L\'evy Processes}
+
+\subsection{Brownian Motion}
+The simplest L\'evy process is the standard Brownian motion $W_t$.
+\begin{itemize}
+    \item Triplet: $(0, 1, 0)$.
+    \item Characteristic exponent: $\psi(u) = -\frac{1}{2}u^2$.
+    \item Paths are continuous almost surely.
+\end{itemize}
+
+\subsection{Poisson Process}
+Let $N_t$ be a Poisson process with intensity $\lambda$.
+\begin{itemize}
+    \item Triplet: Depends on centering, but driven by jump measure $\lambda \delta_1$.
+    \item Paths are piecewise constant step functions.
+\end{itemize}
+
+\subsection{Merton Jump-Diffusion Model}
+In finance, the Merton model extends the Black-Scholes model by adding jumps. The asset price $S_t$ follows:
+\begin{equation}
+    S_t = S_0 e^{(r - \lambda k - \frac{1}{2}\sigma^2)t + \sigma W_t + \sum_{i=1}^{N_t} Y_i}
+\end{equation}
+where:
+\begin{itemize}
+    \item $W_t$ is a Brownian motion.
+    \item $N_t$ is a Poisson process with intensity $\lambda$.
+    \item $Y_i \sim \mathcal{N}(\mu_J, \delta^2)$ are i.i.d. jump sizes (log-returns).
+
+    \item $k = \mathbb{E}[e^{Y_1}] - 1$ is the compensator drift.
+\end{itemize}
+The log-price process $X_t = \ln(S_t/S_0)$ is a L\'evy process with a Gaussian component and a Compound Poisson jump component.
+
+\subsection{Variance Gamma (VG) Process}
+The Variance Gamma process, introduced by Madan and Seneta, is obtained by subordinating a Brownian motion with drift by a Gamma process.
+Let $b(t; \theta, \sigma)$ be a Brownian motion with drift $\theta$ and variance $\sigma^2$. Let $T_t$ be a Gamma process with mean rate $1$ and variance rate $\nu$.
+The VG process is defined as:
+\begin{equation}
+    X_t = b(T_t; \theta, \sigma) = \theta T_t + \sigma W_{T_t}
+\end{equation}
+It has infinite activity (infinite jumps in any finite interval) but finite variation. Its L\'evy measure is:
+\begin{equation}
+    \nu_{VG}(dx) = \frac{1}{\nu |x|} \exp\left( \frac{Ax - B|x|}{\nu} \right) dx
+\end{equation}
+
+\subsection{Normal Inverse Gaussian (NIG) Process}
+The NIG process is obtained by subordinating Brownian motion with an Inverse Gaussian process. It is a subclass of the Generalized Hyperbolic distribution.
+The NIG distribution has heavier tails than the normal distribution and is closed under convolution, making it tractable for scaling over different time horizons.
+
+
+\section{Option Pricing via FFT (Carr-Madan Method)}
+While PIDEs offer one approach, the Fast Fourier Transform (FFT) method by Carr and Madan (1999) is often more efficient for L\'evy models.
+The characteristic function $\phi_T(u) = \mathbb{E}[e^{iu \ln S_T}]$ is typically known in closed form.
+The call option price $C(k)$ with log-strike $k = \ln K$ is given by:
+\begin{equation}
+    C(k) = \frac{e^{-\alpha k}}{\pi} \int_0^\infty e^{-ivk} \psi(v) dv
+\end{equation}
+where $\psi(v)$ is the Fourier transform of the damped call price:
+\begin{equation}
+    \psi(v) = \frac{e^{-rT} \phi_T(v - (\alpha + 1)i)}{\alpha^2 + \alpha - v^2 + i(2\alpha + 1)v}
+\end{equation}
+Here, $\alpha > 0$ is a damping factor to ensure square-integrability. The integral is computed efficiently using FFT.
+
+\section{Change of Measure: The Esscher Transform}
+In incomplete markets like L\'evy models, the risk-neutral measure $\mathbb{Q}$ is not unique. A common choice is the structure-preserving \textbf{Esscher Transform}.
+The Radon-Nikodym derivative is defined as:
+\begin{equation}
+    \frac{d\mathbb{Q}}{d\mathbb{P}}\bigg|_t = \frac{e^{\theta X_t}}{\mathbb{E}[e^{\theta X_t}]}
+\end{equation}
+The parameter $\theta$ is determined by the martingale condition $\mathbb{E}^\mathbb{Q}[e^{rt} S_t] = S_0$.
+Under $\mathbb{Q}$, the characteristic exponent becomes:
+\begin{equation}
+    \psi_\mathbb{Q}(u) = \psi_\mathbb{P}(u - i\theta) - \psi_\mathbb{P}(-i\theta)
+\end{equation}
+
+\section{Simulation Algorithms}
+Simulating L\'evy processes typically involves subordinators.
+\subsection{Simulating Variance Gamma (VG)}
+To simulate $X_t^{VG}(t)$ over step $\Delta t$:
+\begin{enumerate}
+    \item Generate a Gamma random variate $G \sim \Gamma(\Delta t/\nu, \nu)$. This represents the random time change.
+    \item Generate a standard normal $Z \sim \mathcal{N}(0, 1)$.
+    \item Set $\Delta X = \theta G + \sigma \sqrt{G} Z$.
+\end{enumerate}
+
+\subsection{Simulating Normal Inverse Gaussian (NIG)}
+\begin{enumerate}
+    \item Generate an Inverse Gaussian variate $I \sim IG(1, \delta \sqrt{\Delta t})$.
+    \item Generate standard normal $Z$.
+    \item Set $\Delta X = \beta I + \sqrt{I} Z$.
+\end{enumerate}
+
+\section{Conclusion}
+This course has covered the theoretical and computational aspects of L\'evy processes. From the L\'evy-Khintchine representation to advanced pricing using FFT and Esscher transforms, these tools form the backbone of modern quantitative finance beyond the Gaussian world. We also provided practical algorithms for Monte Carlo simulation of VG and NIG processes.
+
+\end{document}

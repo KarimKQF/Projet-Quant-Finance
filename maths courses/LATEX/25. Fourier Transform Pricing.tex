@@ -1,0 +1,81 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\pagestyle{fancy}
+\fancyhead[L]{Fourier Transform Pricing}
+\fancyhead[R]{Quant Finance Portfolio}
+
+\title{\textbf{Step 25: Fourier Transform Pricing}\\ \large The Carr-Madan Formula \& Heston Calibration}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{The Power of Characteristic Functions}
+In advanced quantitative finance, many models (Heston, Bates, Variance Gamma) do not have a closed-form Probability Density Function (PDF), but their \textbf{Characteristic Function (CF)} is known analytically.
+
+The characteristic function $\phi(u)$ is the Fourier Transform of the density $f(x)$:
+$$ \phi(u) = \int_{-\infty}^{\infty} e^{iux} f(x) dx $$
+
+If we know $\phi(u)$, we can recover the option price without ever knowing the density explicitly.
+
+\section{Case Study: The Heston Model}
+The Heston model dynamics are:
+\begin{align*}
+    dS_t &= \mu S_t dt + \sqrt{v_t} S_t dW_t^S \\
+    dv_t &= \kappa (\theta - v_t) dt + \xi \sqrt{v_t} dW_t^v
+\end{align*}
+with correlation $d \langle W^S, W^v \rangle = \rho dt$.
+
+The characteristic function of the log-price $x_T = \ln(S_T)$ is known (Heston, 1993):
+$$ \phi(u) = \exp \left( C(u, \tau) \theta + D(u, \tau) v_0 + i u \ln(S_0) \right) $$
+Where $C$ and $D$ are complex-valued functions involving $\sqrt{(\rho \xi u i - \kappa)^2 + \xi^2 (u^2 + ui)}$.
+
+\section{The Carr-Madan Formula (1999)}
+Carr and Madan revolutionized calibration by linking the Call Price $C(K)$ directly to $\phi(u)$ via FFT.
+
+They define a **Dampened Call Price**:
+$$ c(k) = e^{\alpha k} \times \text{Call}(e^k) $$
+Using Parseval's identity or inverse Fourier transforms, they derived:
+\begin{equation}
+    C(k) = \frac{e^{-\alpha k}}{\pi} \int_0^\infty e^{-ivk} \psi(v) dv
+\end{equation}
+Where $\psi(v)$ is related to the characteristic function of the log-price:
+$$ \psi(v) = \frac{e^{-rT} \phi(v - (\alpha + 1)i)}{\alpha^2 + \alpha - v^2 + i(2\alpha + 1)v} $$
+
+\section{The FFT Implementation}
+The goal is to compute the integral for \textbf{many strikes $k$} simultaneously. We approximate the integral as a sum:
+$$ I(k_u) \approx \sum_{j=0}^{N-1} e^{-i \frac{2\pi}{N} j u} \psi(v_j) \Delta v $$
+This is exactly the format of a Discrete Fourier Transform (DFT).
+
+\subsection{Algorithm Steps}
+\begin{enumerate}
+    \item \textbf{Discretize} the integration domain $[0, A]$ into $N=4096$ points with spacing $\eta$.
+    \item \textbf{Compute} the vector of $\psi(v_j)$ values using the Heston analytic simplifications.
+    \item \textbf{Apply FFT}: Use `fft(vector)` to compute the summation in $O(N \log N)$ time.
+    \item \textbf{Multiply} by dampening factors and weights (Simpson's rule weights).
+    \item \textbf{Extract} Call prices for the grid of Log-Strikes within the strike range.
+\end{enumerate}
+
+\section{Why FFT? (Speed Analysis)}
+If we need to calibrate the 5 Heston parameters $(\kappa, \theta, \xi, \rho, v_0)$ to a surface of 100 options:
+\begin{itemize}
+    \item **Direct Integration**: $100 \text{ integrals} \times 1000 \text{ steps} = 10^5$ evaluations.
+    \item **FFT**: $1 \text{ FFT call} = 100$ prices instantly.
+\end{itemize}
+This speedup factor (often 100x or 1000x) is why FFT is the standard for real-time volatility surface calibration.
+
+\end{document}

@@ -1,0 +1,100 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel} % Changed to English
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+\title{Derivation of the Black-Scholes Formula}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Starting Point: Risk-Neutral Valuation}
+
+The price of a Call option at time $t=0$, denoted by $C_0$, is given by the discounted expectation of the payoff under the risk-neutral measure $\mathbb{Q}$:
+
+\begin{equation}
+    C_0 = e^{-rT} \mathbb{E}^{\mathbb{Q}} \left[ \max(S_T - K, 0) \right]
+\end{equation}
+
+\noindent Where:
+\begin{itemize}
+    \item $S_T$ is the asset price at maturity.
+    \item $K$ is the strike price.
+    \item $r$ is the risk-free rate.
+\end{itemize}
+
+\section{Modeling the Underlying Asset}
+
+In the Black-Scholes model, the asset price follows a Geometric Brownian Motion. We can express $S_T$ in terms of a standard normal random variable $Z \sim \mathcal{N}(0,1)$:
+
+\begin{equation}
+    S_T = S_0 \exp\left( \left(r - \frac{\sigma^2}{2}\right)T + \sigma\sqrt{T} Z \right)
+\end{equation}
+
+\section{Option Exercise Condition}
+
+The option is exercised if $S_T > K$. Let us find the equivalent condition on $Z$:
+
+\begin{align*}
+    S_0 \exp\left( \left(r - \frac{\sigma^2}{2}\right)T + \sigma\sqrt{T} Z \right) &> K \\
+    \ln(S_0) + \left(r - \frac{\sigma^2}{2}\right)T + \sigma\sqrt{T} Z &> \ln(K) \\
+    \sigma\sqrt{T} Z &> \ln\left(\frac{K}{S_0}\right) - \left(r - \frac{\sigma^2}{2}\right)T \\
+    Z &> \frac{\ln(K/S_0) - (r - \frac{\sigma^2}{2})T}{\sigma\sqrt{T}}
+\end{align*}
+
+To simplify notation, we define the lower bound $-d_2$ such that exercise occurs if $Z > -d_2$. We set:
+$$ -d_2 = \frac{\ln(K/S_0) - (r - \frac{\sigma^2}{2})T}{\sigma\sqrt{T}} \quad \Rightarrow \quad d_2 = \frac{\ln(S_0/K) + (r - \frac{\sigma^2}{2})T}{\sigma\sqrt{T}} $$
+
+\section{Calculating the Integral}
+
+We can now rewrite the expectation as an integral using the standard normal density function $\varphi(z) = \frac{1}{\sqrt{2\pi}}e^{-z^2/2}$:
+
+\begin{equation}
+    C_0 = e^{-rT} \int_{-d_2}^{+\infty} (S_T(z) - K) \varphi(z) \, dz
+\end{equation}
+
+By linearity of the integral, we split the calculation into two terms, $A$ and $B$:
+
+$$ C_0 = \underbrace{e^{-rT} \int_{-d_2}^{+\infty} S_T(z) \varphi(z) \, dz}_{\text{Term A}} - \underbrace{e^{-rT} K \int_{-d_2}^{+\infty} \varphi(z) \, dz}_{\text{Term B}} $$
+
+\subsection{Calculating Term B (Strike)}
+This term corresponds to the discounted probability of exercise:
+$$ B = K e^{-rT} \int_{-d_2}^{+\infty} \frac{1}{\sqrt{2\pi}} e^{-z^2/2} \, dz $$
+The integral represents the probability $\mathbb{P}(Z > -d_2)$. By symmetry of the normal distribution, $\mathbb{P}(Z > -x) = \mathbb{P}(Z < x) = N(x)$.
+$$ B = K e^{-rT} N(d_2) $$
+
+\subsection{Calculating Term A (Asset)}
+$$ A = e^{-rT} \int_{-d_2}^{+\infty} S_0 \exp\left( \left(r - \frac{\sigma^2}{2}\right)T + \sigma\sqrt{T} z \right) \frac{1}{\sqrt{2\pi}} e^{-z^2/2} \, dz $$
+The terms $e^{-rT}$ and $e^{rT}$ cancel out. We factor out $S_0$ and combine the exponentials:
+$$ A = S_0 \int_{-d_2}^{+\infty} \frac{1}{\sqrt{2\pi}} \exp\left( -\frac{\sigma^2 T}{2} + \sigma\sqrt{T} z - \frac{z^2}{2} \right) \, dz $$
+We complete the square in the exponent:
+$$ -\frac{1}{2} (z^2 - 2\sigma\sqrt{T}z + \sigma^2 T) = -\frac{1}{2} (z - \sigma\sqrt{T})^2 $$
+The integral becomes:
+$$ A = S_0 \int_{-d_2}^{+\infty} \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}(z - \sigma\sqrt{T})^2} \, dz $$
+Let us perform the change of variable $u = z - \sigma\sqrt{T}$ (so $dz = du$).
+The lower bound $-d_2$ becomes $-d_2 - \sigma\sqrt{T}$.
+Since we define $d_1 = d_2 + \sigma\sqrt{T}$, the new bound is $-d_1$.
+
+$$ A = S_0 \int_{-d_1}^{+\infty} \frac{1}{\sqrt{2\pi}} e^{-u^2/2} \, du = S_0 N(d_1) $$
+
+\section{Final Result: Black-Scholes Formula}
+
+By combining terms $A$ and $B$, we obtain the Call formula:
+
+\begin{equation}
+    \boxed{C_0 = S_0 N(d_1) - K e^{-rT} N(d_2)}
+\end{equation}
+
+With:
+\begin{align*}
+    d_1 &= \frac{\ln(S_0/K) + (r + \frac{\sigma^2}{2})T}{\sigma\sqrt{T}} \\
+    d_2 &= d_1 - \sigma\sqrt{T}
+\end{align*}
+
+\end{document}

@@ -1,0 +1,13 @@
+# Large files
+projects/01_brownian_gbm/project01_bm_gbm_finance_interactive_v7_plus.ipynb
+projects/02_black_sholes_mc/project02_black_scholes_mc_interactive.ipynb
+
+# Python/Jupyter
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb_checkpoints
+.env
+.venv
+env/
+venv/

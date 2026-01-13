@@ -1,0 +1,242 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tocloft}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usetikzlibrary{intersections, backgrounds}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=darkblue, urlcolor=darkblue}
+\definecolor{darkblue}{RGB}{0, 0, 100}
+
+% --- Color Definitions ---
+\definecolor{exoBlue}{RGB}{0, 60, 120}
+\definecolor{exoRed}{RGB}{180, 40, 40}
+\definecolor{exoGreen}{RGB}{0, 100, 50}
+\definecolor{mirrorGrey}{RGB}{120, 120, 120}
+
+% --- Theorem Styles ---
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{proposition}{Proposition}[chapter]
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Stochastic Calculus II}}
+\fancyhead[R]{Exotic Options}
+\fancyfoot[C]{\thepage}
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{Path-Dependent Derivatives}}\\[0.5cm]
+    {\Large \textit{Barrier Options, Reflection Principle, and Asians}}\\[2cm]
+    
+    \textbf{Lecture 12}\\
+    M.Sc. Quantitative Finance\\[2cm]
+    
+    % Graph: Reflection Principle
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=7cm,
+            xlabel={Time ($t$)}, ylabel={Brownian Motion ($W_t$)},
+            xmin=0, xmax=10, ymin=-2, ymax=4,
+            axis lines=middle,
+            title={\textbf{The Reflection Principle}}
+        ]
+        % Barrier
+        \draw[red, thick, dashed] (axis cs:0, 2) -- (axis cs:10, 2);
+        \node at (axis cs: 1, 2.2) [red] {Level $b$};
+        
+        % Original Path (Hitting b and going up)
+        \addplot[thick, exoBlue] coordinates {(0,0) (2,1) (4,2) (6,2.5) (8,3) (10,3.5)};
+        \node at (axis cs:10, 3.5) [anchor=south] {$W_T$};
+        
+        % Reflected Path
+        \addplot[thick, mirrorGrey, dashed] coordinates {(4,2) (6,1.5) (8,1) (10,0.5)};
+        \node at (axis cs:10, 0.5) [anchor=north] {$\tilde{W}_T = 2b - W_T$};
+        
+        % Intersection point
+        \draw[fill=black] (axis cs:4,2) circle (2pt);
+        \node at (axis cs:4, 1.8) [anchor=north] {$\tau_b$};
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: THE REFLECTION PRINCIPLE
+% =======================================================
+\chapter{Brownian Motion Extremes}
+
+To price Barrier options (which die if $S_t$ hits a level), we need the distribution of the running maximum of a Brownian Motion.
+
+\section{First Hitting Time}
+Let $W_t$ be a standard Brownian Motion with $W_0=0$. Let $b > 0$.
+We define the \textbf{First Hitting Time} $\tau_b$:
+\begin{equation}
+    \tau_b = \inf \{ t > 0 : W_t = b \}
+\end{equation}
+
+\section{The Reflection Principle}
+This is a fundamental result in stochastic processes. It relies on the symmetry of Brownian motion.
+
+\begin{theorem}[Reflection Principle]
+For any $b > 0$ and $t > 0$:
+\begin{equation}
+    P(\tau_b \le t) = 2 P(W_t \ge b) = 2 \left( 1 - N\left(\frac{b}{\sqrt{t}}\right) \right)
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Consider a path that crosses level $b$ before time $t$ (so $\tau_b \le t$).
+At time $T$, this path is either above $b$ ($W_t \ge b$) or below $b$ ($W_t < b$).
+\begin{itemize}
+    \item Case 1: $W_t \ge b$. This clearly implies $\tau_b \le t$.
+    \item Case 2: $W_t < b$ BUT $\tau_b \le t$. This means the path went up to $b$, and then came back down.
+\end{itemize}
+By the Strong Markov Property, once the Brownian motion hits $b$, it "forgets" the past and restarts. Since Brownian motion is symmetric, for every path that continues UP to $x > b$, there is a mirror path that goes DOWN to $2b - x$.
+Therefore:
+$$ P(\tau_b \le t, W_t < b) = P(\tau_b \le t, W_t > b) = P(W_t > b) $$
+Adding the two cases:
+$$ P(\tau_b \le t) = P(W_t > b) + P(W_t > b) = 2 P(W_t > b) $$
+\end{proof}
+
+\section{Distribution of the Maximum}
+Let $M_t = \max_{0 \le s \le t} W_s$.
+The event $\{ M_t \ge b \}$ is identical to $\{ \tau_b \le t \}$.
+Thus, the running maximum has the same distribution as $|W_t|$.
+
+% =======================================================
+% CHAPTER 2: BARRIER OPTIONS
+% =======================================================
+\chapter{Barrier Option Pricing}
+
+\section{The Down-and-Out Call}
+Consider a Call option with strike $K$ and barrier $B < S_0$.
+The option pays $\max(S_T - K, 0)$ if and only if $\min_{0 \le t \le T} S_t > B$.
+
+\section{Derivation Strategy}
+We model $S_t$ as a Geometric Brownian Motion:
+$$ S_t = S_0 e^{(r - \sigma^2/2)t + \sigma W_t} $$
+The condition $S_t > B$ is equivalent to a condition on the arithmetic Brownian motion with drift.
+Let $X_t = \ln(S_t/B)$. The barrier for $X_t$ is $0$.
+The problem reduces to calculating the probability that a \textbf{Drifted Brownian Motion} stays positive.
+
+\section{The Analytical Formula}
+Using the Girsanov theorem to handle the drift in the reflection principle, we obtain the closed-form solution:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=exoBlue,title=\textbf{Down-and-Out Call Formula}]
+Let $\lambda = \frac{r - \sigma^2/2}{\sigma^2}$. Let $y = \ln(B^2 / (S_0 K))$.
+\begin{equation}
+    C_{DO} = C_{BS}(S_0, K) - \left( \frac{S_0}{B} \right)^{2\lambda + 2} C_{BS}\left( \frac{B^2}{S_0}, K \right)
+\end{equation}
+\end{tcolorbox}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item The first term is the price of a standard European Call (ignoring the barrier).
+    \item The second term is the value of the "Knock-Out" clause. It represents the probability-weighted value of the paths that hit $B$ and would have ended ITM.
+    \item $\left( \frac{S_0}{B} \right)^{2\lambda + 2}$ is the discount factor related to the distance from the barrier.
+\end{itemize}
+
+% =======================================================
+% CHAPTER 3: ASIAN OPTIONS
+% =======================================================
+\chapter{Asian Options}
+
+\section{Geometric Asian Options (Analytic)}
+The payoff depends on the geometric mean $G_T = \exp\left( \frac{1}{T} \int_0^T \ln S_t dt \right)$.
+
+\begin{proposition}[Variance Reduction]
+The geometric mean of a GBM is also a Log-Normal variable, but with reduced volatility.
+The effective volatility $\sigma_{G}$ is:
+\begin{equation}
+    \sigma_G = \frac{\sigma}{\sqrt{3}}
+\end{equation}
+\end{proposition}
+
+\textit{Proof Sketch:}
+$\ln S_t = \ln S_0 + \mu t + \sigma W_t$.
+The integral $\int_0^T W_t dt$ is a Gaussian variable.
+The variance of the average is the average of the covariances.
+$$ \text{Var}\left( \frac{1}{T} \int_0^T W_t dt \right) = \frac{1}{T^2} \int_0^T \int_0^T \min(s,t) ds dt = \frac{T}{3} $$
+Thus, we can price Geometric Asians using the Black-Scholes formula with $\sigma_{eff} = \sigma/\sqrt{3}$ and adjusted drift $r_{eff} = \frac{1}{2}(r - \sigma^2/6)$.
+
+\section{Arithmetic Asian Options (Numerical)}
+The payoff depends on $A_T = \frac{1}{T} \int_0^T S_t dt$.
+Since the sum of Log-Normals has no closed-form PDF, we rely on Monte Carlo.
+
+\section{Control Variates Technique}
+Standard Monte Carlo is slow. We use the Geometric Asian (whose price $V_G$ is known exactly) to reduce the variance of the Arithmetic estimator.
+
+\begin{algorithm}[H]
+\caption{Asian Pricing with Control Variate}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $S_0, K, r, T, \sigma, M$
+\State Calculate exact price $V_{Geom}^{Exact}$ using BS formula with $\sigma/\sqrt{3}$.
+\State Initialize sums for $V_{Arith}$ and $V_{Geom}$.
+\For{$i = 1$ to $M$}
+    \State Simulate path $S_0, \dots, S_T$
+    \State Calculate Arithmetic Mean $A_T$ and Payoff $P_A = (A_T - K)^+$
+    \State Calculate Geometric Mean $G_T$ and Payoff $P_G = (G_T - K)^+$
+    \State Store pair $(P_A, P_G)$
+\EndFor
+\State Estimate correlation $\beta = \frac{\text{Cov}(P_A, P_G)}{\text{Var}(P_G)}$
+\State \textbf{Result:} $\hat{V}_{CV} = \hat{V}_{Arith}^{MC} - \beta (\hat{V}_{Geom}^{MC} - V_{Geom}^{Exact})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Simulations $M$}, ylabel={Standard Error},
+        title={Variance Reduction Efficiency},
+        set layers,
+        ymode=log,
+        grid=major
+    ]
+    % Standard MC Error (1/sqrt(M))
+    \addplot[exoRed, thick, domain=100:10000] {1/sqrt(x)};
+    \addlegendentry{Standard Monte Carlo}
+    
+    % Control Variate Error (Much lower)
+    \addplot[exoGreen, thick, domain=100:10000] {0.05/sqrt(x)};
+    \addlegendentry{With Control Variate}
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\end{document}

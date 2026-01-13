@@ -1,0 +1,176 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\definecolor{hwGreen}{RGB}{0, 100, 50}
+\definecolor{vasBlue}{RGB}{0, 60, 120}
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Fixed Income Modeling II}}
+\fancyhead[R]{The Hull-White Model}
+\fancyfoot[C]{\thepage}
+
+% --- Theorem Styles ---
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{remark}{Remark}[chapter]
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{The Hull-White Model}}\\[0.5cm]
+    {\Large \textit{Perfect Calibration to the Term Structure}}\\[2cm]
+    
+    \textbf{Lecture 15}\\
+    M.Sc. Quantitative Finance\\[2cm]
+    
+    % Graph: Vasicek vs Hull-White
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=7cm,
+            xlabel={Time ($t$)}, ylabel={Short Rate Expectation $\mathbb{E}[r_t]$},
+            xmin=0, xmax=30, ymin=0, ymax=0.08,
+            grid=major,
+            title={\textbf{Vasicek vs. Hull-White Mean Reversion}}
+        ]
+        
+        % Vasicek: Reverts to constant level
+        \addplot[vasBlue, dashed, ultra thick, domain=0:30] {0.03 + (0.05-0.03)*(1-exp(-0.1*x))};
+        \addlegendentry{Vasicek (Constant $\theta$)}
+        
+        % Hull-White: Fits the market forward curve (e.g. inverted then hump)
+        \addplot[hwGreen, ultra thick, domain=0:30] {0.03 + 0.03*sin(10*x) + 0.001*x};
+        \addlegendentry{Hull-White (Time-Dep $\theta(t)$)}
+        
+        \node at (axis cs: 15, 0.02) {HW follows the Market Curve};
+        
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: EXTENDING VASICEK
+% =======================================================
+\chapter{The Hull-White Model (1990)}
+
+\section{The Fitting Problem}
+The Vasicek model ($dr_t = a(b - r_t)dt + \sigma dW_t$) depends on 3 constant parameters: $a, b, \sigma$.
+The market Yield Curve contains dozens of data points (1M, 3M, 6M, 1Y, ... 30Y).
+It is mathematically impossible for 3 constants to fit 30 points perfectly.
+\textbf{Consequence:} If you use Vasicek to price a bond, your model price $P^{Model}$ will differ from the market price $P^{Mkt}$. This allows for arbitrage, which is unacceptable.
+
+\section{The Hull-White Extension}
+Hull and White (1990) introduced a time-dependent parameter $\theta(t)$ to absorb the error at every maturity.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=hwGreen,title=\textbf{Hull-White SDE}]
+\begin{equation}
+    dr_t = (\theta(t) - a r_t)dt + \sigma dW_t
+\end{equation}
+\end{tcolorbox}
+Here, $a$ (mean reversion speed) and $\sigma$ (volatility) are usually kept constant, but $\theta(t)$ changes over time.
+
+\section{Fitting to the Forward Curve}
+We want the model to match the initial term structure of interest rates observed in the market.
+Let $f^M(0, t)$ be the market instantaneous forward rate at time 0 for maturity $t$.
+$$ f^M(0, t) = - \frac{\partial \ln P^{Mkt}(0, t)}{\partial t} $$
+
+Hull and White derived the exact functional form required for $\theta(t)$:
+
+\begin{theorem}[Calibration Formula]
+To fit the initial term structure perfectly, $\theta(t)$ must be:
+\begin{equation} \label{eq:theta}
+    \theta(t) = \frac{\partial f^M(0,t)}{\partial t} + a f^M(0,t) + \frac{\sigma^2}{2a}(1 - e^{-2at})
+\end{equation}
+\end{theorem}
+
+\begin{remark}
+The term $\frac{\sigma^2}{2a}(1 - e^{-2at})$ is a "convexity adjustment". It arises because bond prices are non-linear functions of rates (Jensen's Inequality).
+\end{remark}
+
+% =======================================================
+% CHAPTER 2: PRICING FORMULAS
+% =======================================================
+\chapter{Analytical Pricing}
+
+Since Hull-White is still a Gaussian model (just like Vasicek), it retains the beautiful Affine structure.
+
+\section{Zero-Coupon Bonds}
+The price of a Zero-Coupon Bond paying \$1 at $T$ is:
+\begin{equation}
+    P(t, T) = A(t, T) e^{-B(t, T) r_t}
+\end{equation}
+
+Where $B(t, T)$ is the same as in Vasicek:
+$$ B(t, T) = \frac{1 - e^{-a(T-t)}}{a} $$
+
+But $A(t, T)$ is adjusted to ensure the fit:
+$$ \ln A(t, T) = \ln \frac{P^{Mkt}(0, T)}{P^{Mkt}(0, t)} - B(t, T) f^M(0, t) - \frac{\sigma^2}{4a} (1 - e^{-2at}) B(t, T)^2 $$
+
+\section{Option on Bonds (Call on ZCB)}
+A European Call option on a Zero-Coupon Bond (maturity $S$, strike $K$, option expiry $T < S$) has a Black-Scholes-like formula:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=hwGreen,title=\textbf{ZCB Option Price}]
+\begin{equation}
+    C_t = P(t, S) N(h) - K P(t, T) N(h - \sigma_p)
+\end{equation}
+Where:
+$$ \sigma_p = \frac{\sigma}{a} \left( 1 - e^{-a(S-T)} \right) \sqrt{\frac{1 - e^{-2a(T-t)}}{2a}} $$
+$$ h = \frac{1}{\sigma_p} \ln \frac{P(t, S)}{P(t, T) K} + \frac{\sigma_p}{2} $$
+\end{tcolorbox}
+
+% =======================================================
+% CHAPTER 3: APPLICATIONS
+% =======================================================
+\chapter{Swaptions \& Jamshidian's Decomposition}
+
+\section{The Swaption Problem}
+A \textbf{Swaption} gives the right to enter a Swap. A Swap can be viewed as a portfolio of Zero-Coupon Bonds (a coupon-bearing bond equals par).
+So a Swaption is an option on a portfolio of bonds:
+$$ \text{Payoff} = \max\left( \sum c_i P(T, T_i) - K, 0 \right) $$
+
+\section{Jamshidian's Decomposition (1989)}
+In general, an option on a sum is NOT the sum of options ($\max(\sum x) \neq \sum \max(x)$).
+However, in 1-factor models like Hull-White, all bond prices $P(T, T_i)$ are driven by the same variable $r_T$. They move in lockstep (monotonicity).
+
+We can find a critical rate $r^*$ such that the portfolio equals $K$.
+Then the Swaption decomposes into a sum of options on individual Zero-Coupon Bonds, each with its own strike $K_i = P(r^*, T, T_i)$.
+
+\begin{equation}
+    \text{Swaption} = \sum_{i} c_i \cdot \text{Option}_{ZCB}(K_i)
+\end{equation}
+
+This allows for ultra-fast pricing of Swaptions using the formula from Chapter 2.
+
+\end{document}

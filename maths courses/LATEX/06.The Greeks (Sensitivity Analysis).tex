@@ -1,0 +1,150 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- Title ---
+\title{Step 6: The Greeks\\(Sensitivity Analysis)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The "Greeks" measure the sensitivity of the option price to changes in underlying parameters. They are essential for risk management and hedging.
+We start with the Black-Scholes formula for a Call option:
+\begin{equation}
+    C = S N(d_1) - K e^{-rT} N(d_2)
+\end{equation}
+
+\section{Preliminary Mathematical Identity}
+
+Before differentiating, we establish a crucial identity that simplifies calculations.
+Recall the definitions of $d_1$ and $d_2$:
+$$ d_2 = d_1 - \sigma\sqrt{T} $$
+The standard normal density is $\varphi(x) = \frac{1}{\sqrt{2\pi}}e^{-x^2/2}$.
+
+It can be shown that:
+\begin{equation} \label{eq:identity}
+    S \varphi(d_1) - K e^{-rT} \varphi(d_2) = 0
+\end{equation}
+\textit{Proof:}
+$$ \frac{\varphi(d_1)}{\varphi(d_2)} = \exp\left(-\frac{d_1^2}{2} + \frac{(d_1 - \sigma\sqrt{T})^2}{2}\right) = \exp\left(-\frac{2d_1\sigma\sqrt{T} - \sigma^2 T}{2}\right) = \frac{K e^{-rT}}{S} $$
+Rearranging yields the identity.
+
+\section{Derivation of Delta ($\Delta$)}
+
+Delta measures the sensitivity to the stock price $S$:
+$$ \Delta = \frac{\partial C}{\partial S} $$
+
+Differentiating the pricing formula using the product rule:
+$$ \frac{\partial C}{\partial S} = N(d_1) + S \frac{\partial N(d_1)}{\partial S} - K e^{-rT} \frac{\partial N(d_2)}{\partial S} $$
+
+Since $N'(x) = \varphi(x)$:
+$$ \frac{\partial C}{\partial S} = N(d_1) + S \varphi(d_1) \frac{\partial d_1}{\partial S} - K e^{-rT} \varphi(d_2) \frac{\partial d_2}{\partial S} $$
+
+Note that $d_2 = d_1 - \sigma\sqrt{T}$, implying $\frac{\partial d_2}{\partial S} = \frac{\partial d_1}{\partial S}$ (since $\sigma\sqrt{T}$ is constant w.r.t $S$).
+We factor out the term $\frac{\partial d_1}{\partial S}$:
+
+$$ \frac{\partial C}{\partial S} = N(d_1) + \frac{\partial d_1}{\partial S} \underbrace{\left[ S \varphi(d_1) - K e^{-rT} \varphi(d_2) \right]}_{\text{Zero by Eq. (\ref{eq:identity})}} $$
+
+Thus, the formula simplifies dramatically to:
+\begin{equation}
+    \boxed{\Delta_{\text{Call}} = N(d_1)}
+\end{equation}
+(For a Put option, $\Delta_{\text{Put}} = N(d_1) - 1$).
+
+\section{Derivation of Gamma ($\Gamma$)}
+
+Gamma measures the rate of change of Delta (convexity). It is the same for Calls and Puts.
+$$ \Gamma = \frac{\partial \Delta}{\partial S} = \frac{\partial N(d_1)}{\partial S} $$
+
+Applying the chain rule:
+$$ \Gamma = \varphi(d_1) \frac{\partial d_1}{\partial S} $$
+
+Recall $d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}}$. The derivative with respect to $S$ is:
+$$ \frac{\partial d_1}{\partial S} = \frac{1}{S\sigma\sqrt{T}} $$
+
+Therefore:
+\begin{equation}
+    \boxed{\Gamma = \frac{\varphi(d_1)}{S\sigma\sqrt{T}}}
+\end{equation}
+
+
+\begin{document}
+
+\maketitle
+
+We rely on the \textbf{Magic Identity} derived previously:
+\begin{equation} \label{eq:magic}
+    S \varphi(d_1) = K e^{-rT} \varphi(d_2)
+\end{equation}
+
+\section{Vega ($\mathcal{V}$): Sensitivity to Volatility}
+Vega measures the sensitivity of the option price to changes in volatility $\sigma$.
+$$ \mathcal{V} = \frac{\partial C}{\partial \sigma} $$
+
+Differentiating the Black-Scholes formula:
+$$ \frac{\partial C}{\partial \sigma} = S \varphi(d_1) \frac{\partial d_1}{\partial \sigma} - K e^{-rT} \varphi(d_2) \frac{\partial d_2}{\partial \sigma} $$
+
+Recall that $d_2 = d_1 - \sigma\sqrt{T}$. Thus:
+$$ \frac{\partial d_2}{\partial \sigma} = \frac{\partial d_1}{\partial \sigma} - \sqrt{T} $$
+
+Substituting this back:
+$$ \frac{\partial C}{\partial \sigma} = S \varphi(d_1) \frac{\partial d_1}{\partial \sigma} - K e^{-rT} \varphi(d_2) \left( \frac{\partial d_1}{\partial \sigma} - \sqrt{T} \right) $$
+
+Grouping terms by $\frac{\partial d_1}{\partial \sigma}$:
+$$ \frac{\partial C}{\partial \sigma} = \frac{\partial d_1}{\partial \sigma} \underbrace{\left( S \varphi(d_1) - K e^{-rT} \varphi(d_2) \right)}_{\text{Zero by Eq. \ref{eq:magic}}} + K e^{-rT} \varphi(d_2) \sqrt{T} $$
+
+Using the Magic Identity on the remaining term ($K e^{-rT} \varphi(d_2) = S \varphi(d_1)$), we get the final formula:
+
+\begin{equation}
+    \boxed{\mathcal{V} = S \sqrt{T} \varphi(d_1)}
+\end{equation}
+
+\section{Rho ($\rho$): Sensitivity to Interest Rates}
+Rho measures sensitivity to the risk-free rate $r$.
+$$ \rho = \frac{\partial C}{\partial r} $$
+
+$$ \frac{\partial C}{\partial r} = S \varphi(d_1) \frac{\partial d_1}{\partial r} - K \left[ -T e^{-rT} N(d_2) + e^{-rT} \varphi(d_2) \frac{\partial d_2}{\partial r} \right] $$
+
+Note that $d_1 - d_2 = \sigma\sqrt{T}$, which does not depend on $r$. Therefore $\frac{\partial d_1}{\partial r} = \frac{\partial d_2}{\partial r}$.
+The terms involving the partial derivatives cancel out due to the Magic Identity. We are left with the term from differentiating the discount factor:
+
+\begin{equation}
+    \boxed{\rho = K T e^{-rT} N(d_2)}
+\end{equation}
+
+\section{Theta ($\Theta$): Sensitivity to Time Decay}
+Theta measures the change in price as time to maturity $T$ decreases. By convention, Theta is negative.
+$$ \Theta = \frac{\partial C}{\partial t} = -\frac{\partial C}{\partial T} $$
+
+Differentiating with respect to $T$:
+$$ \frac{\partial C}{\partial T} = S \varphi(d_1) \frac{\partial d_1}{\partial T} - K \left[ -r e^{-rT} N(d_2) + e^{-rT} \varphi(d_2) \frac{\partial d_2}{\partial T} \right] $$
+
+Using $d_2 = d_1 - \sigma\sqrt{T}$, we have $\frac{\partial d_2}{\partial T} = \frac{\partial d_1}{\partial T} - \frac{\sigma}{2\sqrt{T}}$.
+Substitute and simplify using the Magic Identity to eliminate $\frac{\partial d_1}{\partial T}$:
+
+$$ \frac{\partial C}{\partial T} = r K e^{-rT} N(d_2) + K e^{-rT} \varphi(d_2) \frac{\sigma}{2\sqrt{T}} $$
+
+Using $K e^{-rT} \varphi(d_2) = S \varphi(d_1)$ again:
+$$ \frac{\partial C}{\partial T} = r K e^{-rT} N(d_2) + \frac{S \varphi(d_1) \sigma}{2\sqrt{T}} $$
+
+Since Theta is traditionally the negative of this derivative:
+
+\begin{equation}
+    \boxed{\Theta = - \frac{S \varphi(d_1) \sigma}{2\sqrt{T}} - r K e^{-rT} N(d_2)}
+\end{equation}
+
+\end{document}

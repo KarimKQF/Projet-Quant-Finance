@@ -1,0 +1,125 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\pagestyle{fancy}
+\fancyhead[L]{Advanced Credit Risk Modeling}
+\fancyhead[R]{Quant Finance Portfolio}
+
+\title{\textbf{Step 23: The Mathematics of Credit Risk}\\ \large Structural Models, Intensity Models, and Credit Derivatives}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction to Credit Risk}
+Credit risk is the risk of loss resulting from a borrower's failure to repay a loan or meet contractual obligations. Unlike market risk, where prices move continuously, credit risk is characterized by **rare, extreme jumps** (Defaults).
+
+We classify models into two primary frameworks:
+\begin{enumerate}
+    \item \textbf{Structural Models}: Assume default occurs when firm value falls below a threshold (Endogenous default).
+    \item \textbf{Reduced-Form (Intensity) Models}: Assume default is a random event governed by a hazard rate (Exogenous default).
+\end{enumerate}
+
+\section{Structural Models: The Merton Model (1974)}
+Robert Merton revolutionized credit risk by viewing equity as an option on the firm's assets.
+
+\subsection{The Setup}
+Consider a firm with:
+\begin{itemize}
+    \item Asset value $V_t$ following a Geometric Brownian Motion (under $\mathbb{Q}$):
+    $$ dV_t = (r - \delta) V_t dt + \sigma_V V_t dW_t $$
+    \item Debt consisting of a single Zero-Coupon Bond with face value $D$ maturing at $T$.
+\end{itemize}
+
+\subsection{Default Mechanism}
+Default occurs at $T$ if and only if $V_T < D$.
+\begin{itemize}
+    \item \textbf{Shareholders (Equity $E_T$)}: They have limited liability. If $V_T < D$, they walk away with 0. If $V_T > D$, they pay debt and keep $V_T - D$.
+    $$ E_T = \max(V_T - D, 0) $$
+    This is exactly the payoff of a \textbf{European Call Option} on Asset $V$ with strike $D$.
+    
+    \item \textbf{Bondholders (Debt $B_T$)}: They receive $D$ if solvent, or recover the assets $V_T$ if default.
+    $$ B_T = \min(V_T, D) = D - \max(D - V_T, 0) $$
+    This is equivalent to a Risk-Free Bond minus a \textbf{Put Option} on the assets.
+\end{itemize}
+
+\subsection{Valuation Formulas}
+Using the Black-Scholes formula:
+\begin{equation}
+    E_0 = V_0 N(d_1) - D e^{-rT} N(d_2)
+\end{equation}
+Where:
+$$ d_1 = \frac{\ln(V_0/D) + (r + \frac{1}{2}\sigma_V^2)T}{\sigma_V \sqrt{T}}, \quad d_2 = d_1 - \sigma_V \sqrt{T} $$
+
+\subsection{The Probability of Default (PD)}
+The risk-neutral probability of default is the probability that $V_T < D$:
+\begin{equation}
+    \mathbb{Q}(\text{Default}) = N(-d_2)
+\end{equation}
+Under the physical measure $\mathbb{P}$ (using real drift $\mu$), we often use "Distance to Default" (DD):
+$$ DD = \frac{\ln(V_0/D) + (\mu - \frac{1}{2}\sigma_V^2)T}{\sigma_V \sqrt{T}} $$
+
+\section{Intensity Models (Reduced-Form)}
+In practice, $V_t$ is not observable. Reduced-form models treat default as a "surprise".
+
+\subsection{Poisson Processes and Hazard Rates}
+Let $\tau$ be the default time. We define the \textbf{Hazard Rate} (or Intensity) $\lambda(t)$ such that:
+$$ \mathbb{P}(\tau \in [t, t+dt] \mid \tau > t) = \lambda(t) dt $$
+The probability of survival up to time $T$ is:
+\begin{equation}
+    S(T) = \mathbb{P}(\tau > T) = \exp\left( -\int_0^T \lambda(u) du \right)
+\end{equation}
+If $\lambda$ is constant, $S(T) = e^{-\lambda T}$.
+
+\subsection{Pricing a Defaultable Zero-Coupon Bond}
+A bond paying $\$1$ at $T$ if no default, and Recovery $R$ if default occurs.
+Using the fundamental asset pricing theorem:
+$$ B(0,T) = \mathbb{E}^{\mathbb{Q}} \left[ e^{-\int_0^T r_u du} \mathbb{1}_{\tau > T} + e^{-\int_0^\tau r_u du} R \cdot \mathbb{1}_{\tau \leq T} \right] $$
+Assuming independence between rates and default, and taking $R=0$ (Zero Recovery):
+$$ B(0,T) = P_{\text{risk-free}}(0,T) \times S(T) = e^{-rT} e^{-\lambda T} = e^{-(r+\lambda)T} $$
+Thus, the yield spread is exactly $\lambda$.
+
+\section{Credit Default Swaps (CDS)}
+A CDS is the most liquid credit derivative. 
+\begin{itemize}
+    \item \textbf{Buyer}: Pays spread $s$ (bps per year) on Notional $N$.
+    \item \textbf{Seller}: Pays $(1-R)$ if default occurs.
+\end{itemize}
+
+\subsection{CDS Valuation}
+We equate the PV of the \textbf{Premium Leg} and the \textbf{Protection Leg}.
+\begin{itemize}
+    \item \textbf{Premium Leg (PV)}: $\sum_{i=1}^n s \cdot \Delta t_i \cdot P(0, t_i) \cdot S(t_i) $
+    \item \textbf{Protection Leg (PV)}: $\int_0^T (1-R) P(0,u) \lambda(u) S(u) du$
+\end{itemize}
+Solving for the fair spread $s$ (assuming constant $\lambda$ and continuous premiums):
+\begin{equation}
+    \boxed{s = \lambda (1 - R)}
+\end{equation}
+This is the "Credit Triangle". If Spread = 100bps and Recov = 40\%, then $\lambda \approx 1\% / 0.6 = 1.66\%$.
+
+\section{Multi-Name Credit: Copulas}
+When modeling portfolios (CDOs), correlations matter. A Gaussian Copula imposes a correlation structure on individual default times.
+\subsection{Li's Model (2000)}
+We simulate correlated Gaussian variables $Z_i$.
+$$ \tau_i = S_i^{-1}(\Phi(Z_i)) $$
+Despite its flaws (lack of tail dependence), it remains the market standard for correlation mapping.
+
+\section{Conclusion}
+Mastering credit risk requires bridging the gap between balance sheet views (Merton) and market views (CDS/Intensity).
+\end{document}

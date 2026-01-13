@@ -1,0 +1,185 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\definecolor{rateBlue}{RGB}{0, 60, 120}
+\definecolor{rateRed}{RGB}{180, 40, 40}
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Fixed Income Modeling}}
+\fancyhead[R]{Vasicek \& CIR}
+\fancyfoot[C]{\thepage}
+
+% --- Theorem Styles ---
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{Stochastic Interest Rates}}\\[0.5cm]
+    {\Large \textit{Vasicek, CIR, and Bond Pricing}}\\[2cm]
+    
+    \textbf{Lecture 14}\\
+    M.Sc. Quantitative Finance\\[2cm]
+    
+    % Mean Reversion Graph
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=7cm,
+            xlabel={Time ($t$)}, ylabel={Short Rate ($r_t$)},
+            xmin=0, xmax=50, ymin=0, ymax=0.10,
+            grid=major,
+            title={\textbf{Mean Reverting Rates}}
+        ]
+        
+        % Target Mean Level (b)
+        \addplot[black, dashed, ultra thick] coordinates {(0,0.05) (50,0.05)};
+        \node at (axis cs: 45, 0.052) {Long Term Mean $b$};
+        
+        % Simulated Vasicek Path
+        \addplot[rateBlue, thick] coordinates {
+            (0,0.02) (5,0.035) (10,0.045) (15,0.055) (20,0.048) 
+            (25,0.052) (30,0.042) (35,0.038) (40,0.045) (45,0.051) (50,0.049)
+        };
+        \addlegendentry{Rate Path $r_t$}
+        
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: MODELING THE SHORT RATE
+% =======================================================
+\chapter{The Short Rate Framework}
+
+\section{Introduction}
+So far, we assumed the risk-free rate $r$ was constant. In Fixed Income markets, $r$ is stochastic.
+We model the instantaneous spot rate, or \textbf{Short Rate} $r_t$.
+The price of a Zero-Coupon Bond paying \$1 at time $T$ is given by the risk-neutral expectation:
+
+\begin{equation}
+    P(t, T) = \mathbb{E}^{\mathbb{Q}} \left[ \exp\left( - \int_t^T r_u du \right) \mid \mathcal{F}_t \right]
+\end{equation}
+
+To calculate this, we need an SDE for $r_t$.
+
+\section{The Vasicek Model (1977)}
+Vasicek assumed $r_t$ follows an Ornstein-Uhlenbeck process (Mean-Reverting Gaussian).
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=rateBlue,title=\textbf{Vasicek SDE}]
+\begin{equation}
+    dr_t = a(b - r_t)dt + \sigma dW_t
+\end{equation}
+\end{tcolorbox}
+\begin{itemize}
+    \item $b$: Long-term mean level (e.g., 5\%).
+    \item $a$: Speed of mean reversion.
+    \item $\sigma$: Volatility of rates.
+\end{itemize}
+
+\textbf{Properties:}
+\begin{itemize}
+    \item \textbf{Gaussian:} $r_T$ given $r_t$ is normally distributed.
+    \item \textbf{Negative Rates:} Since it is Gaussian, $r_t$ can become negative. (Historically considered a flaw, but realistic in post-2008 Europe/Japan).
+\end{itemize}
+
+\section{The Cox-Ingersoll-Ross (CIR) Model (1985)}
+To prevent negative interest rates, CIR introduced a square-root diffusion term (similar to Heston).
+
+\begin{tcolorbox}[colback=red!5!white,colframe=rateRed,title=\textbf{CIR SDE}]
+\begin{equation}
+    dr_t = a(b - r_t)dt + \sigma \sqrt{r_t} dW_t
+\end{equation}
+\end{tcolorbox}
+
+\textbf{Properties:}
+\begin{itemize}
+    \item \textbf{Non-Central Chi-Squared:} The distribution of $r_t$ is no longer Gaussian.
+    \item \textbf{Positivity:} If $2ab \ge \sigma^2$ (Feller Condition), rates stay strictly positive.
+\end{itemize}
+
+% =======================================================
+% CHAPTER 2: BOND PRICING (AFFINE MODELS)
+% =======================================================
+\chapter{Analytical Bond Pricing}
+
+Both Vasicek and CIR belong to the class of \textbf{Affine Term Structure Models}. This means the bond price has a specific exponential form.
+
+\section{The Affine Formula}
+For both models, the price of a Zero-Coupon Bond is:
+
+\begin{equation} \label{eq:affine}
+    P(t, T) = A(t, T) e^{-B(t, T) r_t}
+\end{equation}
+
+This is incredibly powerful: knowing the current rate $r_t$ is enough to generate the entire Yield Curve.
+
+\section{Vasicek Solution}
+Let $\tau = T - t$.
+\begin{align}
+    B(\tau) &= \frac{1 - e^{-a\tau}}{a} \\
+    A(\tau) &= \exp \left( \left( b - \frac{\sigma^2}{2a^2} \right)(B(\tau) - \tau) - \frac{\sigma^2}{4a} B(\tau)^2 \right)
+\end{align}
+
+\section{The Yield Curve}
+The Yield $Y(t,T)$ is defined as $-\frac{\ln P(t,T)}{\tau}$.
+$$ Y(t,T) = \frac{B(\tau)}{\tau} r_t - \frac{\ln A(\tau)}{\tau} $$
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Maturity $T$ (Years)}, ylabel={Yield \%},
+        title={Vasicek Yield Curves (Different $r_0$)},
+        legend pos=south east, grid=major
+    ]
+    
+    % Low initial rate -> Upward sloping curve
+    \addplot[rateBlue, thick, domain=0:30] {0.05 - (0.05-0.01)*exp(-0.1*x)};
+    \addlegendentry{$r_0 = 1\%$ (Contango)}
+    
+    % High initial rate -> Inverted curve
+    \addplot[rateRed, thick, domain=0:30] {0.05 + (0.10-0.05)*exp(-0.1*x)};
+    \addlegendentry{$r_0 = 10\%$ (Inverted)}
+    
+    % Mean level
+    \addplot[black, dashed] coordinates {(0,0.05) (30,0.05)};
+    
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\end{document}

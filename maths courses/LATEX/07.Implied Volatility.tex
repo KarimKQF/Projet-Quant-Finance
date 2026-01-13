@@ -1,0 +1,104 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- Title ---
+\title{Step 7: Implied Volatility\\(The Inverse Problem)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction: Price vs. Volatility}
+
+In the previous steps, we treated volatility ($\sigma$) as an input parameter to finding the option price ($C$). This is the theoretical approach.
+$$ \text{Input: } (S, K, r, T, \sigma) \xrightarrow{\text{Black-Scholes}} \text{Output: Price} $$
+
+ However, in professional trading, the logic is reversed.
+\begin{itemize}
+    \item \textbf{Observable:} The Option Price ($C_{mkt}$) is determined by supply and demand on the exchange.
+    \item \textbf{Unobservable:} Future volatility is unknown.
+\end{itemize}
+
+Therefore, traders use the Black-Scholes formula as a translation tool to convert a market price (in dollars/euros) into a volatility figure (in \%). This output is called **Implied Volatility** ($\sigma_{imp}$). It represents the market's expectation of the average volatility until maturity.
+
+\section{Mathematical Formulation}
+
+We seek the value $\sigma_{imp}$ that solves the following equation:
+\begin{equation} \label{eq:inverse}
+    C_{BS}(\sigma_{imp}) - C_{mkt} = 0
+\end{equation}
+
+Where $C_{BS}(\sigma)$ is the Black-Scholes call price function:
+$$ C_{BS}(\sigma) = S_0 N(d_1(\sigma)) - K e^{-rT} N(d_2(\sigma)) $$
+
+\subsection{The Problem of Inversion}
+This equation is **non-linear and transcendental**. Because $\sigma$ appears inside the limits of the normal integral (via $d_1$ and $d_2$), it is algebraically impossible to isolate $\sigma$.
+$$ \sigma = \text{Formula}(C_{mkt}) \quad \leftarrow \textbf{Impossible} $$
+
+\subsection{Existence and Uniqueness (Bijectivity)}
+Before trying to solve it numerically, we must ensure a solution exists.
+Recall from Step 7 that **Vega** is the derivative of price with respect to volatility:
+$$ \mathcal{V} = \frac{\partial C}{\partial \sigma} = S \sqrt{T} \varphi(d_1) $$
+
+Since $S > 0$, $T > 0$, and the Gaussian density $\varphi(d_1) > 0$, we have:
+$$ \mathcal{V} > 0 \quad \text{for all } \sigma > 0 $$
+
+\textbf{Conclusion:} The pricing function is strictly monotonic (increasing).
+\begin{itemize}
+    \item If $\sigma \to 0$, $C \to \max(S-Ke^{-rT}, 0)$ (Intrinsic Value).
+    \item If $\sigma \to \infty$, $C \to S$ (The option becomes the stock).
+\end{itemize}
+As long as the market price $C_{mkt}$ is strictly greater than the intrinsic value (which is always true for traded options due to time value), a unique solution $\sigma_{imp}$ exists.
+
+\section{Numerical Resolution: Newton-Raphson}
+
+To find the root of $f(\sigma) = C_{BS}(\sigma) - C_{mkt} = 0$, we use the Newton-Raphson algorithm. This method is extremely fast because we have an analytical formula for the derivative (Vega).
+
+\subsection{Geometric Interpretation}
+Imagine we are at a guess point $\sigma_n$. We approximate the complex Black-Scholes curve by its **tangent line** at that point.
+The slope of this tangent is Vega ($\mathcal{V}(\sigma_n)$).
+We follow this tangent line down to zero to find our next guess $\sigma_{n+1}$.
+
+\subsection{The Algorithm}
+The Taylor expansion around $\sigma_n$ gives:
+$$ C_{BS}(\sigma_{imp}) \approx C_{BS}(\sigma_n) + \mathcal{V}(\sigma_n)(\sigma_{imp} - \sigma_n) $$
+We set the left side to the target market price $C_{mkt}$:
+$$ C_{mkt} \approx C_{BS}(\sigma_n) + \mathcal{V}(\sigma_n)(\sigma_{imp} - \sigma_n) $$
+
+Solving for $\sigma_{imp}$ (which becomes our next step $\sigma_{n+1}$):
+
+\begin{equation}
+    \boxed{\sigma_{n+1} = \sigma_n - \frac{C_{BS}(\sigma_n) - C_{mkt}}{\mathcal{V}(\sigma_n)}}
+\end{equation}
+
+This iterative process typically converges to machine precision ($10^{-8}$) in 3 to 5 iterations.
+
+\section{Market Reality: The Volatility Surface}
+
+If the Black-Scholes assumptions were perfectly true (Log-Normal distribution, constant volatility), calculating $\sigma_{imp}$ for options with different strikes ($K$) and maturities ($T$) should yield the same number.
+
+\textbf{Reality check:} This is not what we observe.
+When plotting Implied Volatility against Strike Price $K$, we observe a curve called the **Volatility Smile** or **Skew**.
+
+\begin{itemize}
+    \item \textbf{The Smile (Forex):} Implied volatility is higher for both deep ITM and deep OTM options. This suggests the market fears extreme moves (fat tails) more than the Gaussian model predicts.
+    \item \textbf{The Skew (Equities):} Low strike Puts have much higher volatility than high strike Calls. This is known as "Crash Phobia." Traders pay a premium for insurance against market drops, inflating the price (and thus the implied vol) of Puts.
+\end{itemize}
+
+This leads to the concept of the \textbf{Volatility Surface} $\Sigma(K, T)$, implying that Black-Scholes is used as a quoting convention rather than a perfect physical model.
+
+\end{document}

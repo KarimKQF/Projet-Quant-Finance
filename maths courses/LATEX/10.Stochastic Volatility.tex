@@ -1,0 +1,253 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tocloft}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usepgfplotslibrary{fillbetween}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=darkblue, urlcolor=darkblue}
+\definecolor{darkblue}{RGB}{0, 0, 100}
+
+% --- Color Definitions ---
+\definecolor{hestonBlue}{RGB}{0, 60, 120}
+\definecolor{hestonRed}{RGB}{180, 40, 40}
+\definecolor{hestonGreen}{RGB}{0, 100, 50}
+
+% --- Theorem Styles ---
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{remark}{Remark}[chapter]
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Advanced Stochastic Calculus}}
+\fancyhead[R]{The Heston Model}
+\fancyfoot[C]{\thepage}
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{The Heston Model}}\\[0.5cm]
+    {\Large \textit{Stochastic Volatility Pricing \& Calibration}}\\[2cm]
+    
+    \textbf{Module:}\\
+    M.Sc. Quantitative Finance\\[2cm]
+    
+    % Decorative Graph: Heston Smile
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=7cm,
+            axis lines=left,
+            xlabel={Strike Price ($K$)},
+            ylabel={Implied Volatility ($\sigma$)},
+            xtick=\empty, ytick=\empty,
+            domain=0.5:1.5, samples=50
+        ]
+        \addplot[hestonBlue, ultra thick] {0.2 + 0.8*(x-1)^2 - 0.2*(x-1)};
+        \node at (axis cs: 1.0, 0.25) [anchor=south] {The Volatility Skew};
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: DYNAMICS
+% =======================================================
+\chapter{The Heston Dynamics}
+
+\section{Motivation: Failing of Black-Scholes}
+The Black-Scholes model assumes constant volatility ($\sigma = \text{const}$). This contradicts market reality, where we observe:
+\begin{itemize}
+    \item \textbf{Volatility Clustering:} Large moves follow large moves.
+    \item \textbf{The Leverage Effect:} Volatility tends to increase when the stock price drops.
+    \item \textbf{The Smile/Skew:} OTM Puts are more expensive than ATM Calls.
+\end{itemize}
+Steven Heston (1993) proposed modeling the variance as a stochastic process itself.
+
+\section{The System of SDEs}
+Under the Risk-Neutral measure $\mathbb{Q}$, the Heston model is defined by two coupled Stochastic Differential Equations (SDEs):
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=hestonBlue,title=\textbf{Definition: The Heston Model (1993)}]
+\begin{align}
+    \frac{dS_t}{S_t} &= r dt + \sqrt{v_t} dW_t^S & \text{(Asset Price Process)} \\
+    dv_t &= \kappa (\theta - v_t) dt + \xi \sqrt{v_t} dW_t^v & \text{(Variance Process)}
+\end{align}
+With correlation:
+\begin{equation}
+    d\langle W^S, W^v \rangle_t = \rho dt
+\end{equation}
+\end{tcolorbox}
+
+\section{Parameter Interpretation}
+\begin{itemize}
+    \item $\mathbf{v_t}$: Instantaneous variance.
+    \item $\mathbf{\theta}$ (Theta): Long-run average variance.
+    \item $\mathbf{\kappa}$ (Kappa): Mean-reversion speed. High $\kappa$ means volatility returns quickly to $\theta$.
+    \item $\mathbf{\xi}$ (Xi): The "Vol-of-Vol". Controls the kurtosis of returns (fat tails).
+    \item $\mathbf{\rho}$ (Rho): Correlation. Controls the Skew. Typically $\rho \approx -0.7$ for equities.
+\end{itemize}
+
+\section{Mathematical Stability: The Feller Condition}
+The variance process is a CIR (Cox-Ingersoll-Ross) process. Since variance cannot be negative, we must ensure $v_t$ stays strictly positive.
+
+\begin{theorem}[Feller Condition]
+The process $v_t$ remains strictly positive ($v_t > 0$) almost surely if and only if:
+\begin{equation}
+    2\kappa\theta > \xi^2
+\end{equation}
+\end{theorem}
+\textit{Proof intuition:} The drift $\kappa\theta$ (pushing away from 0) must be strong enough to overcome the diffusion noise $\xi$ near zero.
+
+% =======================================================
+% CHAPTER 2: SEMI-CLOSED FORM SOLUTION
+% =======================================================
+\chapter{Pricing via Fourier Transforms}
+
+The beauty of the Heston model is that despite being complex, it admits a semi-analytical solution. We do not need to solve the PDE directly; we use Characteristic Functions.
+
+\section{The Gil-Pelaez Formula}
+By analogy with Black-Scholes ($C = S N(d_1) - K e^{-rT} N(d_2)$), the Heston price is:
+
+\begin{equation}
+    C(S, K, v_0, T) = S P_1 - K e^{-rT} P_2
+\end{equation}
+
+Here, $P_1$ and $P_2$ are not simple normal CDFs, but probabilities recovered by inverting the characteristic function using the Gil-Pelaez theorem:
+
+\begin{tcolorbox}[colback=red!5!white,colframe=hestonRed,title=\textbf{Integration in the Complex Plane}]
+\begin{equation}
+    P_j = \frac{1}{2} + \frac{1}{\pi} \int_0^{\infty} \text{Re}\left[ \frac{e^{-i u \ln K} \phi_j(u, v_0, T)}{i u} \right] du
+\end{equation}
+\end{tcolorbox}
+
+\section{The Characteristic Function $\phi_j$}
+The functions $\phi_j$ solve the Affine PDE associated with the Heston model.
+Let $\tau = T - t$. The solution is of the form:
+$$ \phi_j(u) = \exp(C_j(\tau) + D_j(\tau)v_0 + i u \ln S) $$
+
+The coefficients $C_j$ and $D_j$ are given by (Heston 1993, Albrecher 2007 "Stable Form"):
+
+\begin{align*}
+    D_j(\tau) &= \frac{b_j - \rho \xi u i + d_j}{\xi^2} \left( \frac{1 - e^{d_j \tau}}{1 - g_j e^{d_j \tau}} \right) \\
+    C_j(\tau) &= \frac{\kappa \theta}{\xi^2} \left( (b_j - \rho \xi u i + d_j) \tau - 2 \ln \left( \frac{1 - g_j e^{d_j \tau}}{1 - g_j} \right) \right)
+\end{align*}
+
+Where:
+$$ g_j = \frac{b_j - \rho \xi u i + d_j}{b_j - \rho \xi u i - d_j}, \quad d_j = \sqrt{(\rho \xi u i - b_j)^2 - \xi^2 (2 u_j u i - u^2)} $$
+With parameters for $P_1$ ($u_1=0.5, b_1 = \kappa - \lambda - \rho \xi$) and $P_2$ ($u_2=-0.5, b_2 = \kappa - \lambda$).
+
+% =======================================================
+% CHAPTER 3: SENSITIVITY ANALYSIS
+% =======================================================
+\chapter{Analysis of the Smile}
+
+This chapter visualizes how Heston parameters shape the Volatility Surface.
+
+\section{Effect of Correlation $\rho$ (The Skew)}
+The correlation $\rho$ determines the slope of the smile.
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Strike ($K$)}, ylabel={Implied Vol},
+        title={Impact of $\rho$ (Correlation)},
+        legend pos=north east, grid=major
+    ]
+    % Rho = 0
+    \addplot[black, dashed, thick, domain=0.8:1.2] {0.2 + 2*(x-1)^2};
+    \addlegendentry{$\rho = 0$ (Symmetric)}
+    
+    % Rho = -0.7
+    \addplot[hestonBlue, ultra thick, domain=0.8:1.2] {0.2 + 2*(x-1)^2 - 0.15*(x-1)};
+    \addlegendentry{$\rho = -0.7$ (Skewed)}
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+\textbf{Conclusion:} A negative correlation (Equity markets) makes OTM Puts expensive, creating a downward slope.
+
+\section{Effect of Vol-of-Vol $\xi$ (The Smile)}
+The parameter $\xi$ determines the curvature (convexity).
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Strike ($K$)}, ylabel={Implied Vol},
+        title={Impact of $\xi$ (Vol-of-Vol)},
+        legend pos=north, grid=major
+    ]
+    % Low Vol of Vol
+    \addplot[hestonGreen, thick, domain=0.8:1.2] {0.2 + 0.5*(x-1)^2};
+    \addlegendentry{Low $\xi$ (Flat)}
+    
+    % High Vol of Vol
+    \addplot[hestonRed, ultra thick, domain=0.8:1.2] {0.2 + 4*(x-1)^2};
+    \addlegendentry{High $\xi$ (Convex)}
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+\textbf{Conclusion:} High $\xi$ increases the value of both OTM Puts and Calls (Fat Tails).
+
+% =======================================================
+% CHAPTER 4: SIMULATION & CALIBRATION
+% =======================================================
+\chapter{Numerical Implementation}
+
+\section{Simulation: Full Truncation Scheme}
+Standard Euler discretization fails because $v_t$ can become negative. We use the \textbf{Full Truncation} scheme (Lord et al.):
+
+\begin{algorithm}[H]
+\caption{Heston Monte Carlo Path}
+\begin{algorithmic}[1]
+\State $S_0, v_0, \kappa, \theta, \xi, \rho, T, N$
+\State $\Delta t = T/N$
+\For{$i=0$ to $N-1$}
+    \State Draw $Z_1, Z_2 \sim \mathcal{N}(0,1)$
+    \State $Z_S = \rho Z_1 + \sqrt{1-\rho^2} Z_2$ \Comment{Cholesky}
+    \State $\tilde{v}_i = \max(v_i, 0)$ \Comment{Truncation for drift}
+    \State $v_{i+1} = v_i + \kappa(\theta - \tilde{v}_i)\Delta t + \xi \sqrt{\tilde{v}_i} \sqrt{\Delta t} Z_1$
+    \State $S_{i+1} = S_i \exp\left( (r - 0.5\tilde{v}_i)\Delta t + \sqrt{\tilde{v}_i}\sqrt{\Delta t} Z_S \right)$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\section{Calibration Strategy}
+Calibration involves finding $\Theta = \{v_0, \kappa, \theta, \xi, \rho\}$ to minimize the distance between Heston prices and Market prices.
+
+$$ \min_{\Theta} \sum_{i} w_i \left( C_{Heston}(K_i, T_i, \Theta) - C_{Market}(K_i, T_i) \right)^2 $$
+
+This is a non-convex optimization problem, typically solved using **Levenberg-Marquardt** or **Differential Evolution**.
+
+\end{document}

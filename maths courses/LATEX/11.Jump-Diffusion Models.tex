@@ -1,0 +1,244 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tocloft}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=darkblue, urlcolor=darkblue}
+\definecolor{darkblue}{RGB}{0, 0, 100}
+
+% --- Color Definitions ---
+\definecolor{mertonRed}{RGB}{150, 0, 0}
+\definecolor{mertonBlue}{RGB}{0, 50, 120}
+
+% --- Theorem Styles ---
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{assumption}{Assumption}[chapter]
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Advanced Derivatives Pricing}}
+\fancyhead[R]{Merton Jump-Diffusion}
+\fancyfoot[C]{\thepage}
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{Merton Jump-Diffusion Model}}\\[0.5cm]
+    {\Large \textit{Pricing in Incomplete Markets}}\\[2cm]
+    
+    \textbf{Lecture 11}\\
+    M.Sc. Financial Mathematics\\[2cm]
+    
+    % Decorative Graph: Jump Process
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=6cm,
+            xlabel={Time ($t$)}, ylabel={Log-Price},
+            axis lines=left, xtick=\empty, ytick=\empty
+        ]
+        \addplot[mertonBlue, thick, domain=0:30, samples=2] {0.05*x};
+        \addplot[mertonBlue, thick, domain=30:60, samples=2] {0.05*x - 1}; % Jump down
+        \draw[dashed, red] (axis cs:30, 1.5) -- (axis cs:30, 0.5);
+        \node at (axis cs: 32, 1.0) [red, anchor=west] {Jump $\Delta N_t$};
+        \addplot[mertonBlue, thick, domain=60:90, samples=2] {0.05*x - 1 + 0.5}; % Jump up
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: THE MATHEMATICAL SETUP
+% =======================================================
+\chapter{Stochastic Dynamics with Jumps}
+
+\section{The Failure of Continuity}
+Standard Brownian motion assumes paths are continuous. However, markets exhibit discontinuities (earnings, geopolitical shocks). To model this, we introduce a \textbf{Poisson Process}.
+
+\section{The Poisson Process ($N_t$)}
+Let $N_t$ be a counting process with intensity $\lambda > 0$.
+\begin{itemize}
+    \item $P(\Delta N_t = 1) \approx \lambda dt$ (Probability of a jump in $dt$).
+    \item $P(\Delta N_t = 0) \approx 1 - \lambda dt$.
+    \item $\Delta N_t \in \{0, 1\}$.
+\end{itemize}
+
+\section{The Merton SDE (1976)}
+Under the physical measure $\mathbb{P}$, the asset price $S_t$ evolves as:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=mertonBlue,title=\textbf{Jump-Diffusion SDE}]
+\begin{equation}
+    \frac{dS_t}{S_{t-}} = \mu dt + \sigma dW_t + (Y - 1) dN_t
+\end{equation}
+\end{tcolorbox}
+
+Where:
+\begin{itemize}
+    \item $S_{t-}$ is the price just before the jump.
+    \item $Y$ is the random jump size (non-negative random variable).
+    \item $(Y-1)$ is the percentage change. If $Y=0.8$, the stock drops 20\%.
+\end{itemize}
+
+\section{The Martingale Condition (Drift Adjustment)}
+To define the dynamics under the Risk-Neutral measure $\mathbb{Q}$, the discounted price $e^{-rt}S_t$ must be a martingale.
+Let $k = \mathbb{E}^{\mathbb{Q}}[Y - 1]$ be the expected jump size.
+The SDE under $\mathbb{Q}$ becomes:
+
+\begin{equation} \label{eq:merton_Q}
+    \frac{dS_t}{S_{t-}} = (r - \lambda k) dt + \sigma dW_t^{\mathbb{Q}} + (Y - 1) dN_t
+\end{equation}
+\textit{Note: We subtract $\lambda k dt$ (the compensator) so that the jump part has zero mean on average.}
+
+% =======================================================
+% CHAPTER 2: ITO'S LEMMA FOR JUMPS
+% =======================================================
+\chapter{Itô's Lemma \& PIDE Derivation}
+
+To price options, we need the differential of a function $V(S, t)$ when $S$ jumps. Standard calculus fails here.
+
+\section{Itô's Lemma for Jump-Diffusion}
+Let $S_t$ be a jump-diffusion process. For a smooth function $V(S, t)$, the stochastic differential is:
+
+\begin{equation}
+    dV(S_t, t) = \underbrace{\mathcal{L}_{BS} V dt + \sigma S \frac{\partial V}{\partial S} dW_t}_{\text{Continuous Part}} + \underbrace{[V(S_t, t) - V(S_{t-}, t)]}_{\text{Discontinuous Part}} dN_t
+\end{equation}
+
+Where $\mathcal{L}_{BS}$ is the Black-Scholes differential operator.
+When a jump occurs ($dN_t=1$), the price moves from $S$ to $SY$.
+Thus, the change in option value is $\Delta V = V(SY, t) - V(S, t)$.
+
+\section{Market Incompleteness \& Hedging}
+\begin{remark}[Fundamental Problem]
+Unlike the Black-Scholes model, we cannot perfectly hedge a jump.
+If we hold $\Delta$ shares, and the stock jumps by $-20\%$, our hedge moves linearly, but the option price moves non-linearly (Gamma). There is a \textbf{residual risk}.
+\end{remark}
+
+\begin{assumption}[Merton's Diversification Argument]
+Merton (1976) assumes that the jump risk is specific to the firm (idiosyncratic) and uncorrelated with the market. Therefore, it can be diversified away. The risk premium for the jump component is zero.
+\end{assumption}
+
+\section{Derivation of the PIDE}
+Construct a portfolio $\Pi = V - \Delta S$.
+Applying Itô's Lemma and taking expectations (setting drift to $r$):
+
+$$ \frac{\partial V}{\partial t} + (r - \lambda k) S \frac{\partial V}{\partial S} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + \lambda \mathbb{E}[V(SY) - V(S)] = rV $$
+
+This rearranges to the \textbf{Partial Integro-Differential Equation (PIDE)}:
+
+\begin{tcolorbox}[colback=red!5!white,colframe=mertonRed,title=\textbf{Merton's PIDE}]
+\begin{equation}
+    \frac{\partial V}{\partial t} + (r - \lambda k)S \partial_S V + \frac{1}{2}\sigma^2 S^2 \partial_{SS} V + \lambda \int_0^\infty (V(Sy) - V(S)) f_Y(y) dy = rV
+\end{equation}
+\end{tcolorbox}
+Here, the integral term accounts for the weighted average of all possible post-jump option values.
+
+% =======================================================
+% CHAPTER 3: THE CLOSED-FORM SOLUTION
+% =======================================================
+\chapter{The Solution: A Weighted Sum}
+
+Merton solved this PIDE analytically by conditioning on the number of jumps.
+
+\section{Conditioning on Jumps}
+Let $i$ be the number of jumps occurring during time $T$. This follows a Poisson distribution:
+$$ P(N_T = i) = \frac{e^{-\lambda T} (\lambda T)^i}{i!} $$
+
+If we know exactly $i$ jumps occurred, the asset price is log-normal (product of log-normal diffusion and $i$ log-normal jumps).
+The problem reduces to a Black-Scholes pricing with adjusted volatility and rate.
+
+\section{The Formula}
+The price of a Call option is the weighted sum of Black-Scholes prices:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=mertonBlue,title=\textbf{Merton's Formula}]
+\begin{equation}
+    C_{Merton}(S, K, T) = \sum_{i=0}^{\infty} \frac{e^{-\lambda' T} (\lambda' T)^i}{i!} C_{BS}(S, K, T, r_i, \sigma_i)
+\end{equation}
+\end{tcolorbox}
+
+\section{Adjusted Parameters}
+If the jump size is Log-Normal: $\ln Y \sim \mathcal{N}(\alpha, \delta^2)$.
+Let $\lambda' = \lambda(1+k)$. The parameters for the $i$-th term are:
+
+\begin{align}
+    \sigma_i^2 &= \sigma^2 + \frac{i \delta^2}{T} \\
+    r_i &= r - \lambda k + \frac{i (\alpha + \delta^2/2)}{T}
+\end{align}
+
+\textit{Interpretation:} Each term $i$ represents a "world" where exactly $i$ crashes happened. We calculate the BS price in that world, multiplied by the probability of that world existing.
+
+% =======================================================
+% CHAPTER 4: IMPLIED VOLATILITY PHENOMENOLOGY
+% =======================================================
+\chapter{Analysis of the Smile}
+
+Why do traders use Merton for short-term options and Heston for long-term options?
+
+\section{Short-Term Skew (The "Hockey Stick")}
+For very short maturities ($T \to 0$), the probability of diffusion moving the price far OTM is zero.
+However, a jump can still occur.
+\begin{itemize}
+    \item OTM Puts price is dominated by $\lambda$ (Jump intensity).
+    \item Implied Volatility for low strikes explodes.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Moneyness ($K/S$)}, ylabel={Implied Volatility},
+        title={Term Structure of Skew},
+        legend pos=north west, grid=major
+    ]
+    
+    % Short Maturity (Merton Effect)
+    \addplot[mertonRed, ultra thick, domain=0.8:1.2, samples=50] 
+        {0.2 + 10*exp(-100*(x-0.9)^2) + (x<0.9 ? 0.2*(0.9-x) : 0)};
+    \addlegendentry{$T=1$ Week (Merton Dominance)}
+
+    % Long Maturity (Diffusion Effect)
+    \addplot[mertonBlue, thick, domain=0.8:1.2, samples=50] 
+        {0.2 + 0.5*(x-1)^2 - 0.1*(x-1)};
+    \addlegendentry{$T=1$ Year (CLT Smoothing)}
+    
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{Conclusion:}
+\begin{itemize}
+    \item Merton generates a pronounced skew at short maturities (captures "Gap Risk").
+    \item As $T$ increases, the Central Limit Theorem applies: the sum of many jumps looks like a diffusion. The Merton smile flattens out and becomes indistinguishable from a high-volatility Black-Scholes.
+\end{itemize}
+
+\end{document}

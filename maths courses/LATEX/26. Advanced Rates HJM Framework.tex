@@ -1,0 +1,78 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+% --- Layout ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\pagestyle{fancy}
+\fancyhead[L]{Advanced Rates Modeling}
+\fancyhead[R]{Quant Finance Portfolio}
+
+\title{\textbf{Step 26: Advanced Rates Modeling}\\ \large The Heath-Jarrow-Morton (HJM) Framework}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{The Philosophy of Forward Rates}
+Short-rate models (Vasicek, CIR) start with $r_t$ and try to fit the yield curve. This often fails or requires time-dependent parameters.
+\textbf{David Heath, Robert Jarrow, and Andrew Morton (1992)} inverted the problem: Why not take the observed current Forward Curve $f(0,T)$ as an input and model its evolution?
+
+\section{Mathematical Formulation}
+Let $f(t,T)$ be the instantaneous forward rate at time $t$ for maturity $T$.
+$$ P(t,T) = \exp\left( -\int_t^T f(t,u) du \right) $$
+
+We assume that for every maturity $T$, $f(t,T)$ follows an Itô process:
+\begin{equation}
+    df(t,T) = \alpha(t,T) dt + \sigma(t,T) dW_t
+\end{equation}
+
+\section{The HJM No-Arbitrage Drift Condition}
+This is the central theorem. If the market is free of arbitrage, we cannot choose the drift $\alpha$ and volatility $\sigma$ independently.
+
+Under the Risk-Neutral Measure $\mathbb{Q}$, the discounted bond price $Z(t,T) = D_t P(t,T)$ must be a martingale.
+Applying Ito's Lemma to the bond price formula leads to the \textbf{HJM Drift Condition}:
+
+\begin{equation}
+    \boxed{\alpha(t,T) = \sigma(t,T) \int_t^T \sigma(t,u) du}
+\end{equation}
+
+\textbf{Interpretation:} The drift of the forward rate is completely determined by its volatility structure. High volatility implies high drift (convexity correction).
+
+\section{Gaussian HJM and Principal Component Analysis}
+If $\sigma(t,T)$ is deterministic (Gaussian HJM), the forward rates are normally distributed.
+In practice, the curve does not move in 1 dimension. We typically use a multi-factor model:
+$$ df(t,T) = \alpha(t,T) dt + \sum_{k=1}^3 \sigma_k(t,T) dW_t^{(k)} $$
+PCA Analysis of yield curve changes reveals 3 factors:
+\begin{enumerate}
+    \item \textbf{Level} (Shift): 90\% of variance.
+    \item \textbf{Slope} (Tilt): 8\% of variance.
+    \item \textbf{Curvature} (Twist): 2\% of variance.
+\end{enumerate}
+
+\section{The Brace-Gatarek-Musiela (BGM) / LIBOR Market Model}
+HJM models instantaneous rates $f(t,T)$ which are abstract. The LMM models **Forward LIBOR rates** $L(t, T_i, T_{i+1})$, which are the underlying assets of Caps and Swaptions.
+$$ \frac{dL_k(t)}{L_k(t)} = \mu_k(t) dt + \sigma_k(t) dW_t $$
+The LMM is essentially the "discrete, log-normal" version of HJM. It is the gold standard for pricing complex interest rate derivatives (e.g., Bermudan Swaptions, Snowballs).
+
+\section{Monte Carlo Implementation}
+To simulate the HJM framework:
+\begin{enumerate}
+    \item Discretize time into steps $\Delta t$.
+    \item Initiate with the current Market Forward Curve $f(0, T)$.
+    \item At each step, update the entire curve:
+    $$ f(t+\Delta t, T) = f(t,T) + \left(\sigma \int_t^T \sigma \right) \Delta t + \sigma \sqrt{\Delta t} Z $$
+    \item Calculate Bond Prices $P(t,T)$ from the integral of the new curve.
+\end{enumerate}
+
+\end{document}

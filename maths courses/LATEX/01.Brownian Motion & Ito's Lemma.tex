@@ -1,0 +1,117 @@
+\documentclass[a4paper,11pt]{article}
+
+% --- Packages de base ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel} % Langue anglaise
+\usepackage{amsmath, amsfonts, amssymb} % Outils mathématiques
+\usepackage{geometry} % Mise en page
+\usepackage{parskip} % Espacement entre paragraphes
+
+% --- Configuration des marges ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% --- En-tête du document ---
+\title{Step 1: The Mathematical Engine\\(Brownian Motion \& Ito's Lemma)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Before discussing option pricing, we must define how a stock price moves. Unlike classical functions in physics (smooth and predictable), a stock follows a random and erratic trajectory.
+
+We will cover two fundamental concepts:
+\begin{enumerate}
+    \item The Brownian Motion ($W_t$).
+    \item Ito's Lemma (the keystone of stochastic calculus).
+\end{enumerate}
+
+\section{Brownian Motion ($W_t$)}
+Imagine a pollen particle trembling in a glass of water. In finance, this represents the source of uncertainty (market "noise").
+
+\paragraph{The 3 properties to memorize:}
+\begin{itemize}
+    \item $W_0 = 0$ (It starts at zero).
+    \item Its increments are independent (The past does not predict the future).
+    \item The increment $dW_t$ (movement over a very short time $dt$) follows a Normal distribution:
+    $$ dW_t \sim \mathcal{N}(0, dt) $$
+\end{itemize}
+
+\paragraph{The Golden Rule (Crucial):}
+In classical calculus, $(dx)^2$ is negligible (close to 0). In stochastic calculus, due to infinite volatility in the short term, we have:
+\begin{equation}
+    \boxed{(dW_t)^2 = dt}
+\end{equation}
+It is this equality that changes all derivative formulas.
+
+\section{The Fundamental Derivation: Solving the Price Equation}
+This is the "number 1" derivation in quantitative finance.
+
+\subsection{The Problem}
+We assume that the stock price $S_t$ follows the following Stochastic Differential Equation (SDE) (Black-Scholes Model):
+\begin{equation}
+    \frac{dS_t}{S_t} = \mu dt + \sigma dW_t
+\end{equation}
+Where:
+\begin{itemize}
+    \item $\mu$: The average return (Drift).
+    \item $\sigma$: The volatility (amplitude of the noise).
+    \item $\frac{dS_t}{S_t}$: The instantaneous return.
+\end{itemize}
+
+\textbf{Objective:} Find the explicit formula for $S_t$.
+We cannot simply integrate because $S_t$ appears on both the left and right sides. We must use a transformation function.
+
+\textbf{The Trick:} We use the natural logarithm. Let $f(S_t) = \ln(S_t)$.
+
+\subsection{Application of Ito's Lemma}
+Ito's Lemma states that for a function $f(x)$, the differential is:
+$$ df = \frac{\partial f}{\partial x} dx + \frac{1}{2} \frac{\partial^2 f}{\partial x^2} (dx)^2 $$
+
+Here $x = S_t$. Let us calculate the partial derivatives of $f(S) = \ln(S)$:
+\begin{itemize}
+    \item First derivative: $\frac{\partial f}{\partial S} = \frac{1}{S}$
+    \item Second derivative: $\frac{\partial^2 f}{\partial S^2} = -\frac{1}{S^2}$
+\end{itemize}
+
+Let us apply Ito's formula to $d(\ln S_t)$:
+$$ d(\ln S_t) = \frac{1}{S_t} dS_t + \frac{1}{2} \left( -\frac{1}{S_t^2} \right) (dS_t)^2 $$
+
+Replace $dS_t$ with its formula $(\mu S_t dt + \sigma S_t dW_t)$. 
+For the term $(dS_t)^2$, we apply the \textbf{Golden Rule} $(dW_t)^2 = dt$ and ignore terms in $dt^2$ or $dt \cdot dW$ (too small):
+$$ (dS_t)^2 = (\sigma S_t dW_t)^2 = \sigma^2 S_t^2 (dW_t)^2 = \sigma^2 S_t^2 dt $$
+
+Now, inject everything into the equation for $d(\ln S_t)$:
+$$ d(\ln S_t) = \frac{1}{S_t} (\mu S_t dt + \sigma S_t dW_t) - \frac{1}{2S_t^2} (\sigma^2 S_t^2 dt) $$
+
+We simplify (the $S_t$ terms cancel out miraculously):
+$$ d(\ln S_t) = (\mu dt + \sigma dW_t) - \frac{1}{2} \sigma^2 dt $$
+
+Group the $dt$ terms:
+$$ d(\ln S_t) = \left(\mu - \frac{\sigma^2}{2}\right) dt + \sigma dW_t $$
+
+\subsection{Integration}
+Now that we no longer have $S$ on the right side, we can simply integrate between $0$ and $T$:
+$$ \int_0^T d(\ln S_t) = \int_0^T \left(\mu - \frac{\sigma^2}{2}\right) dt + \int_0^T \sigma dW_t $$
+$$ \ln(S_T) - \ln(S_0) = \left(\mu - \frac{\sigma^2}{2}\right)T + \sigma (W_T - W_0) $$
+
+Since $W_0 = 0$ and $W_T$ can be written as $\sqrt{T}Z$ (with $Z \sim \mathcal{N}(0,1)$):
+$$ \ln\left(\frac{S_T}{S_0}\right) = \left(\mu - \frac{\sigma^2}{2}\right)T + \sigma \sqrt{T} Z $$
+
+By taking the exponential of both sides, we obtain the final formula:
+
+\begin{equation}
+    \boxed{S_T = S_0 \exp\left( \left(\mu - \frac{\sigma^2}{2}\right)T + \sigma \sqrt{T} Z \right)}
+\end{equation}
+
+\section{Key Takeaways}
+\begin{enumerate}
+    \item We do not differentiate normally in finance; we use \textbf{Ito's Lemma}.
+    \item The term $-\frac{\sigma^2}{2}$ appears mathematically due to convexity. It is the price to pay for volatility (the \textit{volatility drag}).
+    \item $S_T$ follows a \textbf{Log-Normal} distribution.
+\end{enumerate}
+
+\end{document}

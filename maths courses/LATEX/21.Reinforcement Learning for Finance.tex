@@ -1,0 +1,100 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Reinforcement Learning for Financial Trading}
+\author{Quant Finance Portfolio}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document outlines the mathematical foundations of Reinforcement Learning (RL) as applied to the trading project (Project 12). We discuss the Markov Decision Process (MDP) formulation, the Bellman equation, and Q-Learning.
+\end{abstract}
+
+\section{Markov Decision Process (MDP)}
+The trading problem is modeled as an MDP tuple $(S, A, P, R, \gamma)$:
+\begin{itemize}
+    \item $S$: State space (e.g., market trend, current holdings).
+    \item $A$: Action space (Buy, Sell, Hold).
+    \item $P(s'|s,a)$: Transition probability distribution (market dynamics).
+    \item $R(s,a,s')$: Reward function (e.g., Change in Net Worth).
+    \item $\gamma \in [0, 1]$: Discount factor.
+\end{itemize}
+
+\section{Value Function and Bellman Equation}
+The goal is to find a policy $\pi: S \to A$ that maximizes the expected cumulative discounted reward:
+\begin{equation}
+    G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
+\end{equation}
+The optimal action-value function $Q^*(s, a)$ satisfies the Bellman Optimality Equation:
+\begin{equation}
+    Q^*(s, a) = \mathbb{E}_{s' \sim P(\cdot|s,a)} \left[ R(s,a,s') + \gamma \max_{a'} Q^*(s', a') \right]
+\end{equation}
+
+\section{Q-Learning Algorithm}
+Since the market transition probabilities $P$ are unknown, we use Q-Learning, a model-free algorithm. The update rule is derived from the temporal difference error:
+\begin{equation}
+    Q(s, a) \leftarrow Q(s, a) + \alpha \left( r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right)
+\end{equation}
+where $\alpha$ is the learning rate.
+
+\section{Application to Trading}
+In our implementation:
+\begin{itemize}
+    \item \textbf{State}: Defined by price trend (Up/Down) and position status (Long/Neutral).
+    \item \textbf{Action}: Discrete actions $\{0: \text{Hold}, 1: \text{Buy}, 2: \text{Sell}\}$.
+
+    \item \textbf{Reward}: The immediate change in portfolio value (Realized + Unrealized PnL).
+\end{itemize}
+By interacting with the environment, the agent approximates $Q^*(s,a)$ effectively learning a trading strategy that maximizes long-term wealth.
+
+\section{Deep Q-Networks (DQN)}
+In high-dimensional or continuous state spaces, maintaining a Q-table is infeasible. DQN approximates the Q-function using a neural network $Q(s, a; \theta)$ with weights $\theta$. The loss function used to train the network is:
+\begin{equation}
+    L(\theta) = \mathbb{E}[(y - Q(s, a; \theta))^2]
+\end{equation}
+where $y = r + \gamma \max_{a'} Q(s', a'; \theta^-)$ is the target, computed using a separate \textit{target network} with weights $\theta^-$ to stabilize training. Additionally, \textit{Experience Replay} is used to break correlations between consecutive samples.
+
+
+\section{Proximal Policy Optimization (PPO)}
+PPO improves upon standard policy gradient methods by preventing large, destructive policy updates. It uses a clipped surrogate objective function:
+\begin{equation}
+    L^{CLIP}(\theta) = \mathbb{E}_t \left[ \min(r_t(\theta)\hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t) \right]
+\end{equation}
+where:
+\begin{itemize}
+    \item $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$ is the probability ratio.
+    \item $\hat{A}_t$ is the estimated advantage.
+    \item $\epsilon$ is a hyperparameter (usually 0.1 or 0.2).
+\end{itemize}
+This ensures the new policy does not deviate too far from the old one, enabling stable training.
+
+\section{Generalized Advantage Estimation (GAE)}
+To reduce variance in policy gradient estimates, Schulman et al. introduced GAE. The advantage $\hat{A}_t^{GAE(\gamma, \lambda)}$ is defined as an exponentially weighted average of $k$-step advantages:
+\begin{equation}
+    \hat{A}_t^{GAE} = \sum_{l=0}^\infty (\gamma \lambda)^l \delta_{t+l}^V
+\end{equation}
+where $\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)$ is the TD error. $\lambda$ controls the bias-variance trade-off.
+
+\section{Partially Observable MDPs (POMDP) and DRQN}
+Financial markets are partially observable; the full state of the economy is never known. This problem is modeled as a POMDP.
+Deep Recurrent Q-Networks (DRQN) address this by replacing the first fully connected layer of a DQN with a Recurrent Neural Network (RNN) or LSTM.
+\begin{enumerate}
+    \item The agent receives an observation $o_t$ (not the full state $s_t$).
+    \item The LSTM maintains an internal hidden state $h_t = \text{LSTM}(h_{t-1}, o_t)$, which acts as a summary of the history.
+    \item The Q-function is approximated as $Q(h_t, a; \theta)$.
+\end{enumerate}
+This allows the agent to integrate information over time and detect regimes or trends that are not visible in a single snapshot.
+
+\section{Conclusion}
+Reinforcement Learning in finance requires handling non-stationarity, partial observability, and noise. By employing advanced techniques like PPO for stability, GAE for variance reduction, and DRQN for temporal memory, we can build robust trading agents capable of adapting to complex market dynamics.
+
+\end{document}

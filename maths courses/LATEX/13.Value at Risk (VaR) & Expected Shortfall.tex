@@ -1,0 +1,175 @@
+\documentclass[a4paper,11pt]{report}
+
+% =======================================================
+% PACKAGES & CONFIGURATION
+% =======================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+% --- Graphics & Plots ---
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usepgfplotslibrary{fillbetween}
+
+% --- Layout Settings ---
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\definecolor{riskRed}{RGB}{180, 20, 20}
+\definecolor{safeGreen}{RGB}{0, 100, 50}
+\definecolor{tailGrey}{RGB}{100, 100, 100}
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Risk Management}}
+\fancyhead[R]{VaR \& Expected Shortfall}
+\fancyfoot[C]{\thepage}
+
+% --- Theorem Styles ---
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+
+% =======================================================
+% DOCUMENT START
+% =======================================================
+\begin{document}
+
+% --- TITLE PAGE ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{Market Risk Management}}\\[0.5cm]
+    {\Large \textit{Value at Risk (VaR) and Expected Shortfall}}\\[2cm]
+    
+    \textbf{Lecture 13}\\
+    M.Sc. Quantitative Finance\\[2cm]
+    
+    % VaR Visualization Graph
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=12cm, height=7cm,
+            xlabel={Loss Amount ($L$)}, ylabel={Probability Density},
+            xmin=-2, xmax=6, ymin=0, ymax=0.45,
+            axis lines=left,
+            title={\textbf{Visualizing Risk Measures (95\%)}}
+        ]
+        
+        % Normal Distribution (Profit/Loss)
+        \addplot[name path=dist, thick, black, domain=-2:6, samples=100] 
+            {1/(sqrt(2*pi))*exp(-(x-1)^2/2)};
+            
+        % VaR Line (at x=2.645 for 95% of N(1,1))
+        \draw[riskRed, thick, dashed] (axis cs:2.645, 0) -- (axis cs:2.645, 0.4);
+        \node at (axis cs:2.7, 0.42) [riskRed, anchor=south] {VaR$_{95\%}$};
+        
+        % Fill the Tail (Expected Shortfall Area)
+        \path[name path=xaxis] (axis cs:2.645,0) -- (axis cs:6,0);
+        \addplot[fill=riskRed, opacity=0.3] fill between[of=dist and xaxis, soft clip={domain=2.645:6}];
+        
+        \node at (axis cs:3.5, 0.05) [anchor=west] {Tail Risk (ES)};
+        
+        \end{axis}
+    \end{tikzpicture}
+    
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =======================================================
+% CHAPTER 1: VALUE AT RISK (VaR)
+% =======================================================
+\chapter{Value at Risk (VaR)}
+
+\section{Definition}
+Value at Risk is the standard metric for quantifying market risk. It answers the question: \textit{"What is the maximum loss I can expect with $\alpha\%$ confidence over a horizon $T$?"}
+
+Let $L$ be the random variable representing the \textbf{Loss} of the portfolio over time $T$.
+(Note: Positive $L$ means we lost money).
+
+\begin{definition}[Value at Risk]
+Given a confidence level $\alpha \in (0, 1)$ (typically 95\% or 99\%), the VaR is the smallest number $l$ such that the probability of the loss exceeding $l$ is no larger than $(1-\alpha)$.
+\begin{equation}
+    \text{VaR}_{\alpha}(L) = \inf \{ l \in \mathbb{R} : P(L > l) \le 1 - \alpha \}
+\end{equation}
+Mathematically, it is simply the $(1-\alpha)$-quantile of the loss distribution.
+\end{definition}
+
+\section{Calculation Methods}
+
+\subsection{1. Parametric VaR (Variance-Covariance)}
+Assume returns follow a Normal distribution $R \sim \mathcal{N}(\mu, \sigma^2)$.
+$$ \text{VaR}_{\alpha} = \text{Portfolio Value} \times (\sigma \cdot z_{\alpha} - \mu) $$
+where $z_{\alpha}$ is the normal quantile (e.g., 1.645 for 95\%, 2.33 for 99\%).
+\textit{Pros:} Instant calculation. \textit{Cons:} Assumes normality (underestimates fat tails).
+
+\subsection{2. Historical Simulation}
+Take the last 500 days of historical returns. Apply them to today's portfolio. The VaR is simply the 5th percentile worst outcome.
+\textit{Pros:} No assumption on distribution. \textit{Cons:} Assumes the past predicts the future.
+
+\subsection{3. Monte Carlo VaR}
+Simulate 10,000 paths using Heston or Jump-Diffusion models. Calculate the portfolio value for each. Sort the losses.
+\textit{Pros:} Captures non-linearities (Options). \textit{Cons:} Computationally expensive.
+
+% =======================================================
+% CHAPTER 2: COHERENT RISK MEASURES
+% =======================================================
+\chapter{Coherent Risk Measures}
+
+\section{The Failure of VaR}
+VaR is not a "perfect" risk measure because it fails the property of \textbf{Sub-additivity}.
+
+\begin{theorem}[Sub-additivity]
+A risk measure $\rho$ is sub-additive if:
+$$ \rho(X + Y) \le \rho(X) + \rho(Y) $$
+Meaning: "Diversification should reduce risk."
+\end{theorem}
+For certain non-normal distributions, $\text{VaR}(A+B) > \text{VaR}(A) + \text{VaR}(B)$. This implies that merging two portfolios creates \textit{more} risk, which encourages splitting banks into tiny pieces to hide risk.
+
+\section{Expected Shortfall (ES)}
+To fix this, Artzner et al. (1999) proposed Expected Shortfall (also called CVaR or TVaR).
+
+\begin{definition}[Expected Shortfall]
+ES is the expected loss \textbf{given that} the loss exceeds the VaR.
+\begin{equation}
+    \text{ES}_{\alpha}(L) = \mathbb{E}[ L \mid L \ge \text{VaR}_{\alpha}(L) ]
+\end{equation}
+\end{definition}
+
+\begin{tcolorbox}[colback=safeGreen!5!white,title=\textbf{Why Basel III moved to ES}]
+VaR tells you \textit{"We are safe 99\% of the time."}
+ES tells you \textit{"If the 1\% crisis happens, we will lose \$5 Billion."}
+ES captures the "Tail Risk" (the severity of the crash), whereas VaR is blind to anything beyond the threshold.
+\end{tcolorbox}
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm, height=6cm,
+        xlabel={Time}, ylabel={Risk Estimate},
+        title={VaR vs ES (Fat Tailed Distribution)},
+        legend pos=north west, grid=major
+    ]
+    % Normal VaR
+    \addplot[blue, thick] coordinates {(0,1) (10,1)};
+    \addlegendentry{VaR (99\%)}
+    
+    % Expected Shortfall (Much higher for fat tails)
+    \addplot[red, ultra thick] coordinates {(0,1.8) (10,1.8)};
+    \addlegendentry{Exp. Shortfall (99\%)}
+    
+    \node at (axis cs: 5, 1.4) {Gap = Hidden Risk};
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\end{document}
